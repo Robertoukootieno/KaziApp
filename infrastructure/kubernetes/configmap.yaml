@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kaziapp-config
+  namespace: kaziapp
+data:
+  # Database Configuration
+  POSTGRES_DB: "kaziapp"
+  POSTGRES_USER: "kaziapp"
+  MONGODB_DATABASE: "kaziapp"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  
+  # API Configuration
+  NODE_ENV: "production"
+  API_GATEWAY_PORT: "3000"
+  
+  # External APIs
+  WEATHER_API_URL: "https://api.openweathermap.org/data/2.5"
+  KMD_API_URL: "https://api.meteo.go.ke"
+  FAO_API_URL: "https://api.fao.org/v1"
+  
+  # M-Pesa Configuration
+  MPESA_ENVIRONMENT: "production"
+  MPESA_SHORTCODE: "174379"
+  
+  # Communication Services
+  SMS_API_URL: "https://api.africastalking.com/version1"
+  
+  # USSD Configuration
+  USSD_SERVICE_CODE: "*123#"
+  USSD_PROVIDER_URL: "https://api.africastalking.com/version1/ussd"
+  
+  # File Storage
+  AWS_REGION: "us-east-1"
+  S3_BUCKET_NAME: "kaziapp-storage"
+  
+  # Monitoring & Logging
+  LOG_LEVEL: "info"
+  
+  # Security
+  CORS_ORIGIN: "https://app.kaziapp.com"
+  
+  # Rate Limiting
+  RATE_LIMIT_WINDOW_MS: "900000"
+  RATE_LIMIT_MAX_REQUESTS: "100"
+  
+  # Cache Configuration
+  CACHE_TTL: "3600"
+  
+  # Data Privacy & Compliance
+  DATA_RETENTION_DAYS: "365"
+  GDPR_COMPLIANCE: "true"
+  KENYA_DATA_PROTECTION_COMPLIANCE: "true"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kaziapp-config-staging
+  namespace: kaziapp-staging
+data:
+  # Database Configuration
+  POSTGRES_DB: "kaziapp_staging"
+  POSTGRES_USER: "kaziapp"
+  MONGODB_DATABASE: "kaziapp_staging"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  
+  # API Configuration
+  NODE_ENV: "staging"
+  API_GATEWAY_PORT: "3000"
+  
+  # External APIs
+  WEATHER_API_URL: "https://api.openweathermap.org/data/2.5"
+  KMD_API_URL: "https://api.meteo.go.ke"
+  FAO_API_URL: "https://api.fao.org/v1"
+  
+  # M-Pesa Configuration
+  MPESA_ENVIRONMENT: "sandbox"
+  MPESA_SHORTCODE: "174379"
+  
+  # Communication Services
+  SMS_API_URL: "https://api.africastalking.com/version1"
+  
+  # USSD Configuration
+  USSD_SERVICE_CODE: "*123#"
+  USSD_PROVIDER_URL: "https://api.africastalking.com/version1/ussd"
+  
+  # File Storage
+  AWS_REGION: "us-east-1"
+  S3_BUCKET_NAME: "kaziapp-storage-staging"
+  
+  # Monitoring & Logging
+  LOG_LEVEL: "debug"
+  
+  # Security
+  CORS_ORIGIN: "https://staging.kaziapp.com"
+  
+  # Rate Limiting
+  RATE_LIMIT_WINDOW_MS: "900000"
+  RATE_LIMIT_MAX_REQUESTS: "1000"
+  
+  # Cache Configuration
+  CACHE_TTL: "1800"
+  
+  # Data Privacy & Compliance
+  DATA_RETENTION_DAYS: "90"
+  GDPR_COMPLIANCE: "true"
+  KENYA_DATA_PROTECTION_COMPLIANCE: "true"

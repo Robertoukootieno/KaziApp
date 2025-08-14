@@ -1,0 +1,243 @@
+version: '3.8'
+
+services:
+  # Databases
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: kaziapp
+      POSTGRES_USER: kaziapp
+      POSTGRES_PASSWORD: kaziapp_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - kaziapp-network
+
+  mongodb:
+    image: mongo:6
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: kaziapp
+      MONGO_INITDB_ROOT_PASSWORD: kaziapp_password
+      MONGO_INITDB_DATABASE: kaziapp
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - kaziapp-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - kaziapp-network
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - POSTGRES_URL=postgresql://kaziapp:kaziapp_password@postgres:5432/kaziapp
+      - MONGODB_URL=mongodb://kaziapp:kaziapp_password@mongodb:27017/kaziapp
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - mongodb
+      - redis
+    networks:
+      - kaziapp-network
+
+  # Core Services
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+      - POSTGRES_URL=postgresql://kaziapp:kaziapp_password@postgres:5432/kaziapp
+      - REDIS_URL=redis://redis:6379
+      - KENYA_VET_BOARD_API_URL=https://api.kenyavetboard.go.ke
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - kaziapp-network
+
+  matching-service:
+    build:
+      context: ./services/matching-service
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=development
+      - POSTGRES_URL=postgresql://kaziapp:kaziapp_password@postgres:5432/kaziapp
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - kaziapp-network
+
+  communication:
+    build:
+      context: ./services/communication
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3000"
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URL=mongodb://kaziapp:kaziapp_password@mongodb:27017/kaziapp
+      - REDIS_URL=redis://redis:6379
+      - TWILIO_ACCOUNT_SID=your_twilio_sid
+      - TWILIO_AUTH_TOKEN=your_twilio_token
+      - WHATSAPP_API_TOKEN=your_whatsapp_token
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - kaziapp-network
+
+  ai-diagnostics:
+    build:
+      context: ./services/ai-diagnostics
+      dockerfile: Dockerfile
+    ports:
+      - "3004:3000"
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URL=mongodb://kaziapp:kaziapp_password@mongodb:27017/kaziapp
+      - REDIS_URL=redis://redis:6379
+      - MODEL_PATH=/app/models
+    volumes:
+      - ./ai-models:/app/models
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - kaziapp-network
+
+  marketplace:
+    build:
+      context: ./services/marketplace
+      dockerfile: Dockerfile
+    ports:
+      - "3005:3000"
+    environment:
+      - NODE_ENV=development
+      - POSTGRES_URL=postgresql://kaziapp:kaziapp_password@postgres:5432/kaziapp
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - kaziapp-network
+
+  farm-management:
+    build:
+      context: ./services/farm-management
+      dockerfile: Dockerfile
+    ports:
+      - "3006:3000"
+    environment:
+      - NODE_ENV=development
+      - POSTGRES_URL=postgresql://kaziapp:kaziapp_password@postgres:5432/kaziapp
+      - MONGODB_URL=mongodb://kaziapp:kaziapp_password@mongodb:27017/kaziapp
+      - REDIS_URL=redis://redis:6379
+      - WEATHER_API_KEY=your_weather_api_key
+    depends_on:
+      - postgres
+      - mongodb
+      - redis
+    networks:
+      - kaziapp-network
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    ports:
+      - "3007:3000"
+    environment:
+      - NODE_ENV=development
+      - POSTGRES_URL=postgresql://kaziapp:kaziapp_password@postgres:5432/kaziapp
+      - REDIS_URL=redis://redis:6379
+      - MPESA_CONSUMER_KEY=your_mpesa_consumer_key
+      - MPESA_CONSUMER_SECRET=your_mpesa_consumer_secret
+      - MPESA_SHORTCODE=your_mpesa_shortcode
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - kaziapp-network
+
+  notification:
+    build:
+      context: ./services/notification
+      dockerfile: Dockerfile
+    ports:
+      - "3008:3000"
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URL=mongodb://kaziapp:kaziapp_password@mongodb:27017/kaziapp
+      - REDIS_URL=redis://redis:6379
+      - SMS_API_KEY=your_sms_api_key
+      - WHATSAPP_API_TOKEN=your_whatsapp_token
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - kaziapp-network
+
+  community:
+    build:
+      context: ./services/community
+      dockerfile: Dockerfile
+    ports:
+      - "3009:3000"
+    environment:
+      - NODE_ENV=development
+      - POSTGRES_URL=postgresql://kaziapp:kaziapp_password@postgres:5432/kaziapp
+      - MONGODB_URL=mongodb://kaziapp:kaziapp_password@mongodb:27017/kaziapp
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - mongodb
+      - redis
+    networks:
+      - kaziapp-network
+
+  # Web Client
+  web-client:
+    build:
+      context: ./clients/web
+      dockerfile: Dockerfile
+    ports:
+      - "3010:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:3000
+    depends_on:
+      - api-gateway
+    networks:
+      - kaziapp-network
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  redis_data:
+
+networks:
+  kaziapp-network:
+    driver: bridge

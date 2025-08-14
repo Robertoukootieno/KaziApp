@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kaziapp
+  labels:
+    name: kaziapp
+    environment: production
+    app: kaziapp
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kaziapp-staging
+  labels:
+    name: kaziapp-staging
+    environment: staging
+    app: kaziapp
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kaziapp-dev
+  labels:
+    name: kaziapp-dev
+    environment: development
+    app: kaziapp
