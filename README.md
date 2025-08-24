@@ -1,3 +1,5 @@
+
+
 # KaziApp - Africa-First Agricultural Platform
 
 KaziApp is a comprehensive agricultural platform designed specifically for African farmers, featuring offline capabilities, multi-language support, and integrated services including veterinary care, marketplace, and AI-powered diagnostics.
