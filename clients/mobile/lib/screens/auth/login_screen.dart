@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'register_screen.dart';
+import 'farmer_register_screen.dart';
 import '../../navigation/main_navigation.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -24,6 +24,30 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Simulate API call
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      // Navigate to main app
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const MainNavigation(),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 40),
-                
+
                 // Logo and Title
                 Center(
                   child: Column(
@@ -64,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 24),
                       const Text(
-                        'Welcome to KaziApp',
+                        'Welcome to KaziApp Mkulima',
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
@@ -225,24 +249,24 @@ class _LoginScreenState extends State<LoginScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.orange.withOpacity(0.3)),
                   ),
-                  child: Column(
+                  child: const Column(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.phone,
                         color: Colors.orange,
                         size: 32,
                       ),
-                      const SizedBox(height: 8),
-                      const Text(
+                      SizedBox(height: 8),
+                      Text(
                         'No Internet? No Problem!',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.orange,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Dial *123# from any phone to access KaziApp services',
+                      SizedBox(height: 4),
+                      Text(
+                        'Dial *123# from any phone to access KaziApp Mkulima services',
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 12),
                       ),
@@ -262,7 +286,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const RegisterScreen(),
+                            builder: (context) => const FarmerRegisterScreen(),
                           ),
                         );
                       },
@@ -284,30 +308,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
-
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-
-        // Navigate to main app
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const MainNavigation(),
-          ),
-        );
-      }
-    }
-  }
 
   void _showForgotPasswordDialog() {
     showDialog(

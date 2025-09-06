@@ -1,8 +1,25 @@
 
 
-# KaziApp - Africa-First Agricultural Platform
+# KaziApp - Africa-First Agricultural Platform Ecosystem
 
-KaziApp is a comprehensive agricultural platform designed specifically for African farmers, featuring offline capabilities, multi-language support, and integrated services including veterinary care, marketplace, and AI-powered diagnostics.
+KaziApp is a comprehensive agricultural platform designed specifically for African farmers and service providers, featuring offline capabilities, multi-language support, and integrated services including veterinary care, marketplace, and AI-powered diagnostics.
+
+## 🌾 Platform Applications
+
+### 📱 KaziApp Mkulima (Farmer App)
+**Target Users**: Farmers, Agricultural Workers, Farm Managers
+**Access**: http://localhost:3000
+**Purpose**: Access agricultural services, products, and expertise
+
+### 🏢 KaziApp Service Provider
+**Target Users**: Veterinarians, Agrovets, Retailers, Machinery Providers, Feed Suppliers
+**Access**: http://localhost:3001
+**Purpose**: Connect with farmers and manage agricultural service business
+
+### 🔧 KaziApp Admin Dashboard
+**Target Users**: System Administrators, Platform Managers, Support Staff
+**Access**: http://localhost:3002
+**Purpose**: Monitor, manage, and administer the entire KaziApp platform
 
 ## 🌍 Africa-First Features
 
@@ -129,6 +146,34 @@ docker-compose up
 ```bash
 kubectl apply -f infrastructure/kubernetes/
 ```
+
+## 🚀 Running the Applications
+
+### KaziApp Mkulima (Farmer App)
+```bash
+cd clients/mobile
+flutter pub get
+flutter run -d web-server --web-port=3000
+```
+**Access at**: http://localhost:3000
+
+### KaziApp Service Provider
+```bash
+cd clients/service_provider
+flutter pub get
+flutter run -d web-server --web-port=3001
+```
+**Access at**: http://localhost:3001
+
+### KaziApp Admin Dashboard
+```bash
+cd clients/admin
+flutter pub get
+flutter run -d web-server --web-port=3002
+```
+**Access at**: http://localhost:3002
+
+**Note**: All three applications can run simultaneously for full platform testing.
 
 ## 📖 Documentation
 

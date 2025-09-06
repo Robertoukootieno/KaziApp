@@ -3,7 +3,7 @@ import '../screens/home_screen.dart';
 import '../screens/vets/vets_screen.dart';
 import '../screens/marketplace/marketplace_screen.dart';
 import '../screens/community/community_screen.dart';
-import '../screens/profile/profile_screen.dart';
+import '../screens/machinery/machinery_services_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -20,7 +20,7 @@ class _MainNavigationState extends State<MainNavigation> {
     const VetsScreen(),
     const MarketplaceScreen(),
     const CommunityScreen(),
-    const ProfileScreen(),
+    const MachineryServicesScreen(),
   ];
 
   final List<BottomNavigationBarItem> _navItems = [
@@ -45,9 +45,9 @@ class _MainNavigationState extends State<MainNavigation> {
       label: 'Community',
     ),
     const BottomNavigationBarItem(
-      icon: Icon(Icons.person_outline),
-      activeIcon: Icon(Icons.person),
-      label: 'Profile',
+      icon: Icon(Icons.agriculture_outlined),
+      activeIcon: Icon(Icons.agriculture),
+      label: 'Machinery',
     ),
   ];
 

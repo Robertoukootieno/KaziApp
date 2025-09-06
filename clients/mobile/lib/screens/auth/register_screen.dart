@@ -8,26 +8,83 @@ class RegisterScreen extends StatefulWidget {
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
-
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
+  final PageController _pageController = PageController();
+
+  // Basic Information Controllers
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+
+  // Farm Information Controllers
+  final _farmNameController = TextEditingController();
+  final _farmLocationController = TextEditingController();
+  final _farmSizeController = TextEditingController();
+  final _experienceController = TextEditingController();
+
+  // Registration State
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  String _selectedFarmType = 'Crops';
+  int _currentPage = 0;
+  final String _selectedFarmingType = '';
+  String _selectedFarmType = '';
+  final String _selectedExperienceLevel = '';
+  String _selectedCounty = '';
+  final String _selectedSubCounty = '';
   String _selectedLanguage = 'English';
+  final List<String> _selectedCrops = [];
+  final List<String> _selectedLivestock = [];
+  final Map<String, bool> _selectedServices = {};
+
+  // Farming Options
+  final List<String> _farmingTypes = [
+    'Crop Farming',
+    'Livestock Farming',
+    'Mixed Farming',
+    'Poultry Farming',
+    'Dairy Farming',
+    'Fish Farming',
+    'Horticulture',
+    'Agro-forestry',
+  ];
 
   final List<String> _farmTypes = [
-    'Crops',
-    'Livestock',
+    'Crop Farming',
+    'Livestock Farming',
     'Mixed Farming',
-    'Poultry',
-    'Dairy',
+    'Poultry Farming',
+    'Dairy Farming',
     'Fish Farming',
+    'Horticulture',
+    'Agro-forestry',
+  ];
+
+  final List<String> _experienceLevels = [
+    'Beginner (0-2 years)',
+    'Intermediate (3-5 years)',
+    'Experienced (6-10 years)',
+    'Expert (10+ years)',
+  ];
+
+  final List<String> _kenyanCounties = [
+    'Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret', 'Thika', 'Malindi',
+    'Kitale', 'Garissa', 'Kakamega', 'Machakos', 'Meru', 'Nyeri', 'Kericho',
+    'Embu', 'Migori', 'Bungoma', 'Homa Bay', 'Naivasha', 'Voi'
+  ];
+
+  final List<String> _cropOptions = [
+    'Maize', 'Beans', 'Rice', 'Wheat', 'Sorghum', 'Millet', 'Cassava',
+    'Sweet Potatoes', 'Irish Potatoes', 'Bananas', 'Sugarcane', 'Cotton',
+    'Coffee', 'Tea', 'Tomatoes', 'Onions', 'Cabbages', 'Kales', 'Spinach',
+    'Carrots', 'Peas', 'French Beans', 'Avocados', 'Mangoes', 'Oranges'
+  ];
+
+  final List<String> _livestockOptions = [
+    'Cattle', 'Goats', 'Sheep', 'Pigs', 'Chickens', 'Ducks', 'Turkeys',
+    'Rabbits', 'Donkeys', 'Camels', 'Fish', 'Bees'
   ];
 
   final List<String> _languages = [
@@ -39,12 +96,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
     'Kamba',
   ];
 
+  final Map<String, String> _appServices = {
+    'AI Diagnosis': 'Get AI-powered disease diagnosis for your animals',
+    'Weather Updates': 'Receive localized weather forecasts and alerts',
+    'Market Prices': 'Track commodity prices and find buyers',
+    'Vet Services': 'Connect with veterinarians for consultations',
+    'Farm Records': 'Digital record keeping for your farm activities',
+    'Community Forum': 'Connect with other farmers in your area',
+    'Training Content': 'Access farming tutorials and best practices',
+    'Financial Services': 'Loans, insurance, and payment solutions',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize selected services
+    for (String service in _appServices.keys) {
+      _selectedServices[service] = true; // Default all services to selected
+    }
+  }
+
   @override
   void dispose() {
+    _pageController.dispose();
     _nameController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _farmNameController.dispose();
+    _farmLocationController.dispose();
+    _farmSizeController.dispose();
+    _experienceController.dispose();
     super.dispose();
   }
 
@@ -57,28 +139,141 @@ class _RegisterScreenState extends State<RegisterScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF2E7D32)),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (_currentPage > 0) {
+              _pageController.previousPage(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
+            } else {
+              Navigator.pop(context);
+            }
+          },
         ),
+        title: Text(
+          'Farmer Registration (${_currentPage + 1}/4)',
+          style: const TextStyle(
+            color: Color(0xFF2E7D32),
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        centerTitle: true,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Title
-                const Text(
-                  'Join KaziApp',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2E7D32),
+      body: Column(
+        children: [
+          // Progress Indicator
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Row(
+              children: List.generate(4, (index) {
+                return Expanded(
+                  child: Container(
+                    margin: EdgeInsets.only(right: index < 3 ? 8 : 0),
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: index <= _currentPage
+                          ? const Color(0xFF2E7D32)
+                          : Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                  textAlign: TextAlign.center,
+                );
+              }),
+            ),
+          ),
+
+          // Page Content
+          Expanded(
+            child: PageView(
+              controller: _pageController,
+              onPageChanged: (page) {
+                setState(() {
+                  _currentPage = page;
+                });
+              },
+              children: [
+                _buildBasicInfoPage(),
+                _buildFarmInfoPage(),
+                _buildFarmingDetailsPage(),
+                _buildPreferencesPage(),
+              ],
+            ),
+          ),
+
+          // Navigation Buttons
+          Container(
+            padding: const EdgeInsets.all(24),
+            child: Row(
+              children: [
+                if (_currentPage > 0)
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        _pageController.previousPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF2E7D32),
+                        side: const BorderSide(color: Color(0xFF2E7D32)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: const Text('Previous'),
+                    ),
+                  ),
+                if (_currentPage > 0) const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _handleNextOrRegister,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2E7D32),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : Text(_currentPage == 3 ? 'Complete Registration' : 'Next'),
+                  ),
                 ),
-                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBasicInfoPage() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Title
+            const Text(
+              'Welcome to KaziApp Mkulima!',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2E7D32),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
                 Text(
                   'Connect with farmers across Africa',
                   style: TextStyle(
@@ -163,7 +358,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 
                 // Farm Type Dropdown
                 DropdownButtonFormField<String>(
-                  value: _selectedFarmType,
+                  initialValue: _selectedFarmType,
                   decoration: InputDecoration(
                     labelText: 'Farm Type',
                     prefixIcon: const Icon(Icons.agriculture),
@@ -196,7 +391,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 
                 // Language Dropdown
                 DropdownButtonFormField<String>(
-                  value: _selectedLanguage,
+                  initialValue: _selectedLanguage,
                   decoration: InputDecoration(
                     labelText: 'Preferred Language',
                     prefixIcon: const Icon(Icons.language),
@@ -359,9 +554,199 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ],
             ),
           ),
-        ),
+        );
+  }
+
+  Widget _buildFarmInfoPage() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Farm Information',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2E7D32),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Tell us more about your farm',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          TextFormField(
+            controller: _farmNameController,
+            decoration: InputDecoration(
+              labelText: 'Farm Name',
+              hintText: 'Enter your farm name',
+              prefixIcon: const Icon(Icons.home_work),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your farm name';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _farmLocationController,
+            decoration: InputDecoration(
+              labelText: 'Farm Location',
+              hintText: 'Enter your farm location',
+              prefixIcon: const Icon(Icons.location_on),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your farm location';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            initialValue: _selectedCounty.isNotEmpty ? _selectedCounty : null,
+            decoration: InputDecoration(
+              labelText: 'County',
+              prefixIcon: const Icon(Icons.map),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+              ),
+            ),
+            items: _kenyanCounties.map((String county) {
+              return DropdownMenuItem<String>(
+                value: county,
+                child: Text(county),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedCounty = newValue!;
+              });
+            },
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please select your county';
+              }
+              return null;
+            },
+          ),
+        ],
       ),
     );
+  }
+
+  Widget _buildFarmingDetailsPage() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Farming Details',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2E7D32),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Tell us about your farming experience',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          // Add farming details form fields here
+          const Text('Farming details form will be implemented here'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPreferencesPage() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Preferences',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2E7D32),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Customize your experience',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          // Add preferences form fields here
+          const Text('Preferences form will be implemented here'),
+        ],
+      ),
+    );
+  }
+
+  void _handleNextOrRegister() {
+    if (_currentPage < 3) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    } else {
+      _handleRegister();
+    }
   }
 
   void _handleRegister() async {

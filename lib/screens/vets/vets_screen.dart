@@ -8,289 +8,557 @@ class VetsScreen extends StatefulWidget {
 }
 
 class _VetsScreenState extends State<VetsScreen> {
-  String _selectedSpecialty = 'All';
-  String _selectedLocation = 'All';
-  bool _isOnlineOnly = false;
+  String _currentLocation = 'Nakuru, Kenya';
+  String _requestStatus = 'idle'; // idle, selecting_animal, searching, vet_found, in_progress
+  String? _selectedAnimal;
+  Map<String, dynamic>? _selectedVet;
 
-  final List<String> _specialties = [
-    'All',
-    'Livestock',
-    'Poultry',
-    'Dairy Cattle',
-    'Small Animals',
-    'Large Animals',
-    'Crop Diseases',
+  // Animal types for issue selection
+  final List<Map<String, dynamic>> _animalTypes = [
+    {'name': 'Cattle', 'icon': Icons.agriculture, 'color': Colors.brown},
+    {'name': 'Goats', 'icon': Icons.pets, 'color': Colors.orange},
+    {'name': 'Sheep', 'icon': Icons.pets, 'color': Colors.grey},
+    {'name': 'Poultry', 'icon': Icons.egg, 'color': Colors.yellow},
+    {'name': 'Pigs', 'icon': Icons.pets, 'color': Colors.pink},
+    {'name': 'Crops', 'icon': Icons.grass, 'color': Colors.green},
   ];
 
-  final List<String> _locations = [
-    'All',
-    'Nairobi',
-    'Mombasa',
-    'Kisumu',
-    'Nakuru',
-    'Eldoret',
-    'Thika',
-  ];
-
-  final List<Map<String, dynamic>> _vets = [
+  // Nearby vets (simulated)
+  final List<Map<String, dynamic>> _nearbyVets = [
     {
+      'id': 'vet_001',
       'name': 'Dr. Sarah Wanjiku',
       'specialty': 'Livestock & Dairy',
-      'location': 'Nairobi',
       'rating': 4.8,
       'experience': '8 years',
-      'price': 'KSh 1,500',
-      'isOnline': true,
-      'image': 'assets/images/vet1.jpg',
-      'languages': ['English', 'Kiswahili', 'Kikuyu'],
+      'eta': '12 min',
+      'distance': '2.3 km',
+      'price': 1500,
+      'isAvailable': true,
     },
     {
+      'id': 'vet_002', 
       'name': 'Dr. James Ochieng',
       'specialty': 'Poultry & Small Animals',
-      'location': 'Kisumu',
       'rating': 4.9,
       'experience': '12 years',
-      'price': 'KSh 1,200',
-      'isOnline': true,
-      'image': 'assets/images/vet2.jpg',
-      'languages': ['English', 'Kiswahili', 'Luo'],
-    },
-    {
-      'name': 'Dr. Mary Chebet',
-      'specialty': 'Crop Diseases',
-      'location': 'Eldoret',
-      'rating': 4.7,
-      'experience': '6 years',
-      'price': 'KSh 1,000',
-      'isOnline': false,
-      'image': 'assets/images/vet3.jpg',
-      'languages': ['English', 'Kiswahili', 'Kalenjin'],
-    },
-    {
-      'name': 'Dr. Peter Mwangi',
-      'specialty': 'Large Animals',
-      'location': 'Nakuru',
-      'rating': 4.6,
-      'experience': '10 years',
-      'price': 'KSh 1,800',
-      'isOnline': true,
-      'image': 'assets/images/vet4.jpg',
-      'languages': ['English', 'Kiswahili'],
+      'eta': '8 min',
+      'distance': '1.8 km',
+      'price': 1800,
+      'isAvailable': true,
     },
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Find Veterinarians'),
-        backgroundColor: const Color(0xFF2E7D32),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              _showSearchDialog();
-            },
-          ),
-        ],
-      ),
-      body: Column(
+      body: Stack(
         children: [
-          // Filters Section
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: _selectedSpecialty,
-                        decoration: InputDecoration(
-                          labelText: 'Specialty',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                        ),
-                        items: _specialties.map((String specialty) {
-                          return DropdownMenuItem<String>(
-                            value: specialty,
-                            child: Text(specialty),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            _selectedSpecialty = newValue!;
-                          });
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: _selectedLocation,
-                        decoration: InputDecoration(
-                          labelText: 'Location',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                        ),
-                        items: _locations.map((String location) {
-                          return DropdownMenuItem<String>(
-                            value: location,
-                            child: Text(location),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            _selectedLocation = newValue!;
-                          });
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _isOnlineOnly,
-                      onChanged: (bool? value) {
-                        setState(() {
-                          _isOnlineOnly = value!;
-                        });
-                      },
-                      activeColor: const Color(0xFF2E7D32),
-                    ),
-                    const Text('Online consultation only'),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          // Map Background (Simulated)
+          _buildMapView(),
           
-          // Emergency Banner
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.red.withOpacity(0.3)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.emergency, color: Colors.red, size: 32),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Emergency?',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red,
-                        ),
-                      ),
-                      const Text(
-                        'Call our 24/7 emergency hotline',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    _showEmergencyDialog();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('Call Now'),
-                ),
-              ],
-            ),
-          ),
+          // Top App Bar
+          _buildTopAppBar(),
           
-          // Vets List
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _getFilteredVets().length,
-              itemBuilder: (context, index) {
-                final vet = _getFilteredVets()[index];
-                return _buildVetCard(vet);
-              },
-            ),
-          ),
+          // Main Content Based on Status
+          if (_requestStatus == 'idle') ...[
+            _buildFindVetButton(),
+            _buildQuickActions(),
+          ] else if (_requestStatus == 'selecting_animal') ...[
+            _buildAnimalSelectionSheet(),
+          ] else if (_requestStatus == 'searching') ...[
+            _buildSearchingSheet(),
+          ] else if (_requestStatus == 'vet_found') ...[
+            _buildVetFoundSheet(),
+          ],
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          _showUSSDDialog();
-        },
-        backgroundColor: Colors.orange,
-        icon: const Icon(Icons.phone),
-        label: const Text('USSD *123#'),
       ),
     );
   }
 
-  List<Map<String, dynamic>> _getFilteredVets() {
-    return _vets.where((vet) {
-      bool matchesSpecialty = _selectedSpecialty == 'All' || 
-          vet['specialty'].toString().contains(_selectedSpecialty);
-      bool matchesLocation = _selectedLocation == 'All' || 
-          vet['location'] == _selectedLocation;
-      bool matchesOnline = !_isOnlineOnly || vet['isOnline'] == true;
-      
-      return matchesSpecialty && matchesLocation && matchesOnline;
-    }).toList();
+  Widget _buildMapView() {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFE8F5E8), Color(0xFFF1F8E9)],
+        ),
+      ),
+      child: Stack(
+        children: [
+          // User location marker
+          Positioned(
+            left: MediaQuery.of(context).size.width * 0.5 - 15,
+            top: MediaQuery.of(context).size.height * 0.5 - 15,
+            child: Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: Colors.blue,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 3),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.person, color: Colors.white, size: 16),
+            ),
+          ),
+          
+          // Vet markers
+          Positioned(
+            left: MediaQuery.of(context).size.width * 0.3,
+            top: MediaQuery.of(context).size.height * 0.3,
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2E7D32),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.medical_services, color: Colors.white, size: 20),
+            ),
+          ),
+          
+          Positioned(
+            left: MediaQuery.of(context).size.width * 0.7,
+            top: MediaQuery.of(context).size.height * 0.4,
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2E7D32),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.medical_services, color: Colors.white, size: 20),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  Widget _buildVetCard(Map<String, dynamic> vet) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+  Widget _buildTopAppBar() {
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: SafeArea(
+        child: Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.arrow_back, size: 20),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Find Veterinarian',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      _currentLocation,
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.menu, size: 20),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFindVetButton() {
+    return Positioned(
+      bottom: 120,
+      left: 16,
+      right: 16,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2E7D32).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.medical_services,
+                    color: Color(0xFF2E7D32),
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Need a Veterinarian?',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        'Get expert help for your animals and crops',
+                        style: TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _requestStatus = 'selecting_animal';
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2E7D32),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
+              ),
+              child: const Text(
+                'Find Vet Now',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActions() {
+    return Positioned(
+      bottom: 20,
+      left: 16,
+      right: 16,
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildQuickActionCard(
+              'Emergency',
+              Icons.emergency,
+              Colors.red,
+              () => _showEmergencyDialog(),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildQuickActionCard(
+              'USSD *123#',
+              Icons.phone,
+              Colors.orange,
+              () => _showUSSDDialog(),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildQuickActionCard(
+              'AI Diagnosis',
+              Icons.camera_alt,
+              Colors.blue,
+              () => Navigator.pushNamed(context, '/ai_diagnosis'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionCard(String title, IconData icon, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnimalSelectionSheet() {
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const Text(
+              'What animal needs help?',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 1,
+              ),
+              itemCount: _animalTypes.length,
+              itemBuilder: (context, index) {
+                final animal = _animalTypes[index];
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedAnimal = animal['name'];
+                      _requestStatus = 'searching';
+                    });
+                    _searchForVets();
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: (animal['color'] as Color).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: (animal['color'] as Color).withOpacity(0.3),
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          animal['icon'] as IconData,
+                          size: 32,
+                          color: animal['color'] as Color,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          animal['name'] as String,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+            OutlinedButton(
+              onPressed: () {
+                setState(() {
+                  _requestStatus = 'idle';
+                });
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchingSheet() {
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32)),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Finding vets for $_selectedAnimal...',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'We\'re matching you with the best available veterinarians in your area',
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            OutlinedButton(
+              onPressed: () {
+                setState(() {
+                  _requestStatus = 'idle';
+                });
+              },
+              child: const Text('Cancel Search'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVetFoundSheet() {
+    if (_selectedVet == null) return const SizedBox.shrink();
+
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
             Row(
               children: [
                 CircleAvatar(
                   radius: 30,
                   backgroundColor: const Color(0xFF2E7D32),
                   child: Text(
-                    vet['name'].toString().split(' ').map((n) => n[0]).join(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    _selectedVet!['name'].toString().split(' ').map((n) => n[0]).take(2).join(),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -299,50 +567,21 @@ class _VetsScreenState extends State<VetsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        vet['name'],
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        _selectedVet!['name'],
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       Text(
-                        vet['specialty'],
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
+                        _selectedVet!['specialty'],
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                       Row(
                         children: [
-                          Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
+                          const Icon(Icons.star, color: Colors.amber, size: 16),
                           const SizedBox(width: 4),
                           Text(
-                            vet['location'],
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 12,
-                            ),
+                            '${_selectedVet!['rating']} • ${_selectedVet!['experience']}',
+                            style: const TextStyle(fontSize: 12),
                           ),
-                          const SizedBox(width: 16),
-                          if (vet['isOnline'])
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Text(
-                                'Online',
-                                style: TextStyle(
-                                  color: Colors.green,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
                         ],
                       ),
                     ],
@@ -351,76 +590,48 @@ class _VetsScreenState extends State<VetsScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.star, color: Colors.amber, size: 16),
-                        const SizedBox(width: 4),
-                        Text(
-                          vet['rating'].toString(),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ],
+                    Text(
+                      'ETA: ${_selectedVet!['eta']}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2E7D32),
+                      ),
                     ),
                     Text(
-                      vet['experience'],
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
-                      ),
+                      'KSh ${_selectedVet!['price']}',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                   ],
                 ),
               ],
             ),
-            
-            const SizedBox(height: 16),
-            
-            // Languages
-            Wrap(
-              spacing: 8,
-              children: (vet['languages'] as List<String>).map((language) {
-                return Chip(
-                  label: Text(
-                    language,
-                    style: const TextStyle(fontSize: 10),
-                  ),
-                  backgroundColor: const Color(0xFF2E7D32).withOpacity(0.1),
-                  side: BorderSide.none,
-                );
-              }).toList(),
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Action Buttons
+            const SizedBox(height: 20),
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: OutlinedButton(
                     onPressed: () {
-                      _showVetDetails(vet);
+                      setState(() {
+                        _requestStatus = 'searching';
+                      });
+                      _searchForVets();
                     },
-                    icon: const Icon(Icons.info_outline),
-                    label: const Text('Details'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF2E7D32),
-                      side: const BorderSide(color: Color(0xFF2E7D32)),
-                    ),
+                    child: const Text('Find Another'),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: ElevatedButton.icon(
+                  flex: 2,
+                  child: ElevatedButton(
                     onPressed: () {
-                      _bookConsultation(vet);
+                      _bookVet();
                     },
-                    icon: const Icon(Icons.calendar_today),
-                    label: Text('Book ${vet['price']}'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2E7D32),
                       foregroundColor: Colors.white,
                     ),
+                    child: const Text('Book Now'),
                   ),
                 ),
               ],
@@ -431,27 +642,25 @@ class _VetsScreenState extends State<VetsScreen> {
     );
   }
 
-  void _showSearchDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Search Veterinarians'),
-        content: const TextField(
-          decoration: InputDecoration(
-            hintText: 'Enter vet name or specialty...',
-            prefixIcon: Icon(Icons.search),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Search'),
-          ),
-        ],
+  // Helper methods
+  void _searchForVets() async {
+    await Future.delayed(const Duration(seconds: 2));
+
+    // Find best available vet
+    final availableVets = _nearbyVets.where((vet) => vet['isAvailable'] == true).toList();
+    if (availableVets.isNotEmpty) {
+      setState(() {
+        _selectedVet = availableVets.first;
+        _requestStatus = 'vet_found';
+      });
+    }
+  }
+
+  void _bookVet() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Booking ${_selectedVet!['name']}...'),
+        backgroundColor: const Color(0xFF2E7D32),
       ),
     );
   }
@@ -462,7 +671,7 @@ class _VetsScreenState extends State<VetsScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Emergency Veterinary Care'),
         content: const Text(
-          '24/7 Emergency Hotline:\n+254 700 123 456\n\nFor immediate assistance with:\n• Animal emergencies\n• Poisoning cases\n• Severe injuries\n• Critical conditions',
+          '24/7 Emergency Hotline:\n+254 700 123 456\n\nFor immediate assistance with critical animal health issues.',
         ),
         actions: [
           TextButton(
@@ -472,7 +681,6 @@ class _VetsScreenState extends State<VetsScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // Simulate phone call
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Calling emergency hotline...'),
@@ -494,119 +702,12 @@ class _VetsScreenState extends State<VetsScreen> {
       builder: (context) => AlertDialog(
         title: const Text('USSD Vet Services'),
         content: const Text(
-          'Dial *123# from any phone to:\n\n• Find nearby vets\n• Get emergency contacts\n• Check vet availability\n• Book consultations\n\nWorks without internet!',
+          'Dial *123*3# from any phone to:\n\n• Find nearby vets\n• Book consultations\n• Get emergency help\n• Check consultation history\n\nWorks on any phone, even without internet!',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Got it'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showVetDetails(Map<String, dynamic> vet) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        maxChildSize: 0.9,
-        minChildSize: 0.5,
-        builder: (context, scrollController) => Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                vet['name'],
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                vet['specialty'],
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'About',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Experienced veterinarian with ${vet['experience']} of practice. Specializes in ${vet['specialty'].toLowerCase()} with a focus on preventive care and treatment.',
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _bookConsultation(vet);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2E7D32),
-                      ),
-                      child: const Text('Book Consultation'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _bookConsultation(Map<String, dynamic> vet) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Book with ${vet['name']}'),
-        content: Text(
-          'Consultation fee: ${vet['price']}\n\nChoose your preferred time and payment method.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Booking confirmed with ${vet['name']}!'),
-                  backgroundColor: const Color(0xFF2E7D32),
-                ),
-              );
-            },
-            child: const Text('Confirm Booking'),
           ),
         ],
       ),

@@ -83,6 +83,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
           ],
         ),
         floatingActionButton: FloatingActionButton.extended(
+          heroTag: "community_fab",
           onPressed: () {
             _showCreateGroupDialog();
           },

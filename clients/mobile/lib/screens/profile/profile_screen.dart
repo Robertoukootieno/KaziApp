@@ -42,13 +42,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
                   children: [
-                    CircleAvatar(
+                    const CircleAvatar(
                       radius: 50,
                       backgroundColor: Colors.white,
                       child: CircleAvatar(
                         radius: 45,
-                        backgroundColor: const Color(0xFF2E7D32),
-                        child: const Text(
+                        backgroundColor: Color(0xFF2E7D32),
+                        child: Text(
                           'JM',
                           style: TextStyle(
                             fontSize: 32,

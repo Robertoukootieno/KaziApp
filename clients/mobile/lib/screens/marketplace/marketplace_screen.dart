@@ -179,6 +179,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: "marketplace_fab",
         onPressed: () {
           _showSellDialog();
         },
@@ -413,11 +414,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Row(
+            const Row(
               children: [
-                const Icon(Icons.payment, color: Color(0xFF2E7D32)),
-                const SizedBox(width: 8),
-                const Text('M-Pesa'),
+                Icon(Icons.payment, color: Color(0xFF2E7D32)),
+                SizedBox(width: 8),
+                Text('M-Pesa'),
               ],
             ),
           ],

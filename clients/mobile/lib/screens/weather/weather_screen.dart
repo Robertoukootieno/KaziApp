@@ -338,23 +338,23 @@ class _WeatherScreenState extends State<WeatherScreen> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.orange.withOpacity(0.3)),
                 ),
-                child: Column(
+                child: const Column(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.phone,
                       color: Colors.orange,
                       size: 32,
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
+                    SizedBox(height: 8),
+                    Text(
                       'Get Weather via USSD',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.orange,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
+                    SizedBox(height: 4),
+                    Text(
                       'Dial *123*3# for weather updates via SMS',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 12),
