@@ -1,0 +1,58 @@
+{
+  "name": "kaziapp-keycloak-integration",
+  "version": "1.0.0",
+  "description": "KaziApp Keycloak Integration Service - Bridges Keycloak with KaziApp services",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "format": "prettier --write src/",
+    "setup-realm": "node scripts/setup-realm.js"
+  },
+  "keywords": [
+    "keycloak",
+    "authentication",
+    "authorization",
+    "oauth2",
+    "openid-connect",
+    "jwt",
+    "sso",
+    "agriculture",
+    "africa"
+  ],
+  "dependencies": {
+    "express": "^4.18.2",
+    "helmet": "^7.0.0",
+    "cors": "^2.8.5",
+    "morgan": "^1.10.0",
+    "compression": "^1.7.4",
+    "dotenv": "^16.3.1",
+    "redis": "^4.6.7",
+    "winston": "^3.10.0",
+    "joi": "^17.9.2",
+    "uuid": "^9.0.0",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.4",
+    "prom-client": "^14.2.0",
+    "axios": "^1.4.0",
+    "@keycloak/keycloak-admin-client": "^22.0.5",
+    "jsonwebtoken": "^9.0.2",
+    "jwks-rsa": "^3.0.1",
+    "node-cron": "^3.0.2",
+    "bcryptjs": "^2.4.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "jest": "^29.6.1",
+    "supertest": "^6.3.3",
+    "eslint": "^8.44.0",
+    "prettier": "^3.0.0"
+  },
+  "author": "KaziApp Team",
+  "license": "MIT"
+}

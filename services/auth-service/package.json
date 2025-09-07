@@ -1,0 +1,51 @@
+{
+  "name": "kaziapp-auth-service",
+  "version": "1.0.0",
+  "description": "KaziApp Authentication Service - Enterprise-grade authentication using Keycloak",
+  "main": "integration-service/src/index.js",
+  "scripts": {
+    "start": "./scripts/start-auth.sh",
+    "dev": "cd integration-service && npm run dev",
+    "install-deps": "cd integration-service && npm install",
+    "test": "cd integration-service && npm test",
+    "lint": "cd integration-service && npm run lint",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "keycloak:import": "cd integration-service && node scripts/import-realm.js",
+    "keycloak:export": "cd integration-service && node scripts/export-realm.js",
+    "db:backup": "docker-compose exec keycloak-db pg_dump -U keycloak keycloak > backup.sql",
+    "db:restore": "docker-compose exec -T keycloak-db psql -U keycloak keycloak < backup.sql",
+    "health": "curl -f http://localhost:3150/health && curl -f http://localhost:8080/health/ready",
+    "clean": "docker-compose down -v && docker volume prune -f"
+  },
+  "keywords": [
+    "authentication",
+    "keycloak",
+    "oauth2",
+    "openid-connect",
+    "jwt",
+    "sso",
+    "rbac",
+    "agriculture",
+    "africa",
+    "kaziapp"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kaziapp/kaziapp-backend.git",
+    "directory": "services/auth-service"
+  },
+  "author": "KaziApp Team",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {},
+  "workspaces": [
+    "integration-service",
+    "legacy"
+  ]
+}

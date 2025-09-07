@@ -37,6 +37,9 @@ dependencies:
   local_auth: ^2.1.6
   crypto: ^3.0.3
   encrypt: ^5.0.1
+  # Keycloak integration
+  openid_client: ^0.4.4
+  jwt_decoder: ^2.0.1
 
   # WebRTC & Video Calling (simulated for demo)
   # flutter_webrtc: ^0.9.48

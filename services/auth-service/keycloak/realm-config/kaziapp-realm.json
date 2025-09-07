@@ -1,0 +1,405 @@
+{
+  "realm": "kaziapp",
+  "displayName": "KaziApp Authentication Realm",
+  "displayNameHtml": "<div class=\"kc-logo-text\"><span>KaziApp</span></div>",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": false,
+  "rememberMe": true,
+  "verifyEmail": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "failureFactor": 30,
+  "defaultSignatureAlgorithm": "RS256",
+  "revokeRefreshToken": false,
+  "refreshTokenMaxReuse": 0,
+  "accessTokenLifespan": 300,
+  "accessTokenLifespanForImplicitFlow": 900,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "ssoSessionIdleTimeoutRememberMe": 0,
+  "ssoSessionMaxLifespanRememberMe": 0,
+  "offlineSessionIdleTimeout": 2592000,
+  "offlineSessionMaxLifespanEnabled": false,
+  "offlineSessionMaxLifespan": 5184000,
+  "clientSessionIdleTimeout": 0,
+  "clientSessionMaxLifespan": 0,
+  "clientOfflineSessionIdleTimeout": 0,
+  "clientOfflineSessionMaxLifespan": 0,
+  "accessCodeLifespan": 60,
+  "accessCodeLifespanUserAction": 300,
+  "accessCodeLifespanLogin": 1800,
+  "actionTokenGeneratedByAdminLifespan": 43200,
+  "actionTokenGeneratedByUserLifespan": 300,
+  "oauth2DeviceCodeLifespan": 600,
+  "oauth2DevicePollingInterval": 5,
+  "internationalizationEnabled": true,
+  "supportedLocales": ["en", "sw"],
+  "defaultLocale": "en",
+  "authenticationFlows": [
+    {
+      "alias": "kaziapp-browser",
+      "description": "KaziApp browser based authentication",
+      "providerId": "basic-flow",
+      "topLevel": true,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "auth-cookie",
+          "requirement": "ALTERNATIVE",
+          "priority": 10,
+          "userSetupAllowed": false,
+          "autheticatorFlow": false
+        },
+        {
+          "authenticator": "auth-spnego",
+          "requirement": "DISABLED",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "autheticatorFlow": false
+        },
+        {
+          "authenticator": "identity-provider-redirector",
+          "requirement": "ALTERNATIVE",
+          "priority": 25,
+          "userSetupAllowed": false,
+          "autheticatorFlow": false
+        },
+        {
+          "flowAlias": "kaziapp-browser-forms",
+          "requirement": "ALTERNATIVE",
+          "priority": 30,
+          "userSetupAllowed": false,
+          "autheticatorFlow": true
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "kaziapp-farmer-mobile",
+      "name": "KaziApp Farmer Mobile App",
+      "description": "Mobile application for farmers",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "farmer-mobile-secret-2024",
+      "redirectUris": [
+        "kaziapp://auth/callback",
+        "http://localhost:3000/auth/callback",
+        "http://localhost:3010/auth/callback"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "http://localhost:3010",
+        "kaziapp://*"
+      ],
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "fullScopeAllowed": true,
+      "attributes": {
+        "access.token.lifespan": "1800",
+        "client.offline.session.idle.timeout": "2592000",
+        "client.offline.session.max.lifespan": "5184000"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "profile",
+        "roles",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
+    },
+    {
+      "clientId": "kaziapp-provider-mobile",
+      "name": "KaziApp Service Provider Mobile App",
+      "description": "Mobile application for service providers",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "provider-mobile-secret-2024",
+      "redirectUris": [
+        "kaziapp-provider://auth/callback",
+        "http://localhost:3000/auth/callback",
+        "http://localhost:3011/auth/callback"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "http://localhost:3011",
+        "kaziapp-provider://*"
+      ],
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "fullScopeAllowed": true,
+      "attributes": {
+        "access.token.lifespan": "1800"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "profile",
+        "roles",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access"
+      ]
+    },
+    {
+      "clientId": "kaziapp-admin-web",
+      "name": "KaziApp Admin Dashboard",
+      "description": "Web dashboard for administrators",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "admin-web-secret-2024",
+      "redirectUris": [
+        "http://localhost:3002/*",
+        "http://localhost:3012/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3002",
+        "http://localhost:3012"
+      ],
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": true,
+      "attributes": {
+        "access.token.lifespan": "3600"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "profile",
+        "roles",
+        "email"
+      ]
+    },
+    {
+      "clientId": "kaziapp-backend-services",
+      "name": "KaziApp Backend Services",
+      "description": "Service-to-service authentication",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "backend-services-secret-2024",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": true,
+      "attributes": {
+        "access.token.lifespan": "3600"
+      }
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "farmer",
+        "description": "Farmer role with access to farming features",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "service_provider",
+        "description": "Service provider role with access to provider features",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "veterinarian",
+        "description": "Veterinarian role with specialized service provider access",
+        "composite": true,
+        "composites": {
+          "realm": ["service_provider"]
+        },
+        "clientRole": false
+      },
+      {
+        "name": "agronomist",
+        "description": "Agronomist role with specialized service provider access",
+        "composite": true,
+        "composites": {
+          "realm": ["service_provider"]
+        },
+        "clientRole": false
+      },
+      {
+        "name": "buyer",
+        "description": "Buyer role with access to marketplace features",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "vendor",
+        "description": "Vendor role with access to supply features",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "admin",
+        "description": "Administrator role with full system access",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "super_admin",
+        "description": "Super administrator role with unrestricted access",
+        "composite": true,
+        "composites": {
+          "realm": ["admin", "farmer", "service_provider", "buyer", "vendor"]
+        },
+        "clientRole": false
+      }
+    ]
+  },
+  "groups": [
+    {
+      "name": "Farmers",
+      "path": "/Farmers",
+      "realmRoles": ["farmer"],
+      "subGroups": [
+        {
+          "name": "Crop Farmers",
+          "path": "/Farmers/Crop Farmers"
+        },
+        {
+          "name": "Livestock Farmers",
+          "path": "/Farmers/Livestock Farmers"
+        },
+        {
+          "name": "Mixed Farmers",
+          "path": "/Farmers/Mixed Farmers"
+        }
+      ]
+    },
+    {
+      "name": "Service Providers",
+      "path": "/Service Providers",
+      "realmRoles": ["service_provider"],
+      "subGroups": [
+        {
+          "name": "Veterinarians",
+          "path": "/Service Providers/Veterinarians",
+          "realmRoles": ["veterinarian"]
+        },
+        {
+          "name": "Agronomists",
+          "path": "/Service Providers/Agronomists",
+          "realmRoles": ["agronomist"]
+        },
+        {
+          "name": "Equipment Providers",
+          "path": "/Service Providers/Equipment Providers"
+        }
+      ]
+    },
+    {
+      "name": "Marketplace Users",
+      "path": "/Marketplace Users",
+      "subGroups": [
+        {
+          "name": "Buyers",
+          "path": "/Marketplace Users/Buyers",
+          "realmRoles": ["buyer"]
+        },
+        {
+          "name": "Vendors",
+          "path": "/Marketplace Users/Vendors",
+          "realmRoles": ["vendor"]
+        }
+      ]
+    },
+    {
+      "name": "Administrators",
+      "path": "/Administrators",
+      "realmRoles": ["admin"],
+      "subGroups": [
+        {
+          "name": "System Admins",
+          "path": "/Administrators/System Admins",
+          "realmRoles": ["super_admin"]
+        },
+        {
+          "name": "Content Moderators",
+          "path": "/Administrators/Content Moderators"
+        }
+      ]
+    }
+  ],
+  "userFederationProviders": [],
+  "userFederationMappers": [],
+  "identityProviders": [],
+  "identityProviderMappers": [],
+  "components": {
+    "org.keycloak.keys.KeyProvider": [
+      {
+        "name": "rsa-generated",
+        "providerId": "rsa-generated",
+        "subComponents": {},
+        "config": {
+          "priority": ["100"]
+        }
+      },
+      {
+        "name": "hmac-generated",
+        "providerId": "hmac-generated",
+        "subComponents": {},
+        "config": {
+          "priority": ["100"],
+          "algorithm": ["HS256"]
+        }
+      },
+      {
+        "name": "aes-generated",
+        "providerId": "aes-generated",
+        "subComponents": {},
+        "config": {
+          "priority": ["100"]
+        }
+      }
+    ]
+  },
+  "attributes": {
+    "frontendUrl": "http://localhost:8080",
+    "adminEventsEnabled": "true",
+    "adminEventsDetailsEnabled": "true",
+    "eventsEnabled": "true",
+    "eventsExpiration": "1209600",
+    "eventsListeners": "jboss-logging"
+  },
+  "keycloakVersion": "23.0.0",
+  "userManagedAccessAllowed": false,
+  "clientProfiles": {
+    "profiles": []
+  },
+  "clientPolicies": {
+    "policies": []
+  }
+}

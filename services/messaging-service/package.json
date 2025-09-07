@@ -1,0 +1,59 @@
+{
+  "name": "kaziapp-messaging-service",
+  "version": "1.0.0",
+  "description": "KaziApp Messaging & Notification Service - Push, SMS, email, in-app chat with moderation",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "format": "prettier --write src/"
+  },
+  "keywords": [
+    "messaging",
+    "notifications",
+    "push",
+    "sms",
+    "email",
+    "chat",
+    "moderation",
+    "communication",
+    "agriculture",
+    "africa"
+  ],
+  "dependencies": {
+    "express": "^4.18.2",
+    "helmet": "^7.0.0",
+    "cors": "^2.8.5",
+    "morgan": "^1.10.0",
+    "compression": "^1.7.4",
+    "dotenv": "^16.3.1",
+    "redis": "^4.6.7",
+    "winston": "^3.10.0",
+    "joi": "^17.9.2",
+    "uuid": "^9.0.0",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.4",
+    "prom-client": "^14.2.0",
+    "axios": "^1.4.0",
+    "mongoose": "^7.4.0",
+    "socket.io": "^4.7.2",
+    "nodemailer": "^6.9.4",
+    "twilio": "^4.14.0",
+    "firebase-admin": "^11.10.1",
+    "node-cron": "^3.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "jest": "^29.6.1",
+    "supertest": "^6.3.3",
+    "eslint": "^8.44.0",
+    "prettier": "^3.0.0"
+  },
+  "author": "KaziApp Team",
+  "license": "MIT"
+}

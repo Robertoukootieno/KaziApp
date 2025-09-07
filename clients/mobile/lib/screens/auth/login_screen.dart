@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'farmer_register_screen.dart';
+import 'email_verification_screen.dart';
 import '../../navigation/main_navigation.dart';
+import '../../services/keycloak_auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,6 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
+  final KeycloakAuthService _authService = KeycloakAuthService();
   bool _isLoading = false;
   bool _obscurePassword = true;
 
@@ -31,21 +34,77 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      // Initialize Keycloak service
+      await _authService.initialize();
 
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+      // Format phone number to include country code
+      String phoneNumber = _phoneController.text.trim();
+      if (!phoneNumber.startsWith('+254')) {
+        phoneNumber = '+254${phoneNumber.substring(1)}'; // Remove leading 0 and add +254
+      }
 
-      // Navigate to main app
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const MainNavigation(),
-        ),
-      );
+      // Attempt login
+      final result = await _authService.login(phoneNumber, _passwordController.text);
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (result.success && result.user != null) {
+          // Check if email verification is required
+          if (!result.user!.emailVerified && result.user!.email != null && result.user!.email!.isNotEmpty) {
+            // Show verification required message
+            _showMessage(
+              'Please verify your email address before logging in. Check your email for verification instructions.',
+              isError: true,
+            );
+
+            // Navigate to email verification screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => EmailVerificationScreen(
+                  username: phoneNumber,
+                  email: result.user!.email!,
+                ),
+              ),
+            );
+          } else {
+            // Login successful, navigate to main app
+            _showMessage('Welcome back, ${result.user!.firstName}!');
+
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => const MainNavigation(),
+              ),
+            );
+          }
+        } else {
+          // Login failed
+          _showMessage(result.error ?? 'Login failed. Please check your credentials.', isError: true);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        _showMessage('Login failed: ${e.toString()}', isError: true);
+      }
     }
+  }
+
+  void _showMessage(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : const Color(0xFF2E7D32),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: isError ? 4 : 2),
+      ),
+    );
   }
 
   @override

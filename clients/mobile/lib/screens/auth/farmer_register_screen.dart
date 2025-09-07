@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../navigation/main_navigation.dart';
 import '../../services/farmer_profile_service.dart';
+import '../../services/keycloak_auth_service.dart';
+import 'email_verification_screen.dart';
 
 class FarmerRegisterScreen extends StatefulWidget {
   const FarmerRegisterScreen({super.key});
@@ -17,6 +19,7 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
   // Basic Information Controllers
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   
@@ -105,6 +108,7 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
     _pageController.dispose();
     _nameController.dispose();
     _phoneController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _farmNameController.dispose();
@@ -318,6 +322,31 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
 
           const SizedBox(height: 16),
 
+          // Email Field
+          TextFormField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: InputDecoration(
+              labelText: 'Email Address (Optional)',
+              hintText: 'your.email@example.com',
+              prefixIcon: const Icon(Icons.email),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+              ),
+              helperText: 'Required for email verification and notifications',
+              helperStyle: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
           // Password Field
           TextFormField(
             controller: _passwordController,
@@ -458,6 +487,11 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
           _showValidationError('Passwords do not match');
           return false;
         }
+        // Validate email format if provided
+        if (_emailController.text.isNotEmpty && !_isValidEmail(_emailController.text)) {
+          _showValidationError('Please enter a valid email address');
+          return false;
+        }
         break;
 
       case 1: // Farm Info Page
@@ -503,17 +537,143 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
     );
   }
 
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  }
+
   void _completeRegistration() async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // Initialize profile service
+      // Initialize Keycloak auth service
+      final authService = KeycloakAuthService();
+      await authService.initialize();
+
+      // Parse name into first and last name
+      final nameParts = _nameController.text.trim().split(' ');
+      final firstName = nameParts.first;
+      final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+
+      // Format phone number to include country code
+      String phoneNumber = _phoneController.text.trim();
+      if (!phoneNumber.startsWith('+254')) {
+        phoneNumber = '+254${phoneNumber.substring(1)}'; // Remove leading 0 and add +254
+      }
+
+      // Create registration object
+      final registration = UserRegistration(
+        firstName: firstName,
+        lastName: lastName,
+        phoneNumber: phoneNumber,
+        email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
+        password: _passwordController.text,
+        confirmPassword: _confirmPasswordController.text,
+        county: _selectedCounty.isEmpty ? null : _selectedCounty,
+        preferredLanguage: _selectedLanguage.toLowerCase() == 'english' ? 'en' : 'sw',
+        clientType: 'farmer',
+        acceptTerms: true,
+      );
+
+      // Register with Keycloak
+      final result = await authService.register(registration);
+
+      if (result.success && result.user != null) {
+        // If email verification is required
+        if (result.requiresVerification && _emailController.text.isNotEmpty) {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+
+            // Show verification message
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Registration successful! Please check your email to verify your account.'),
+                backgroundColor: const Color(0xFF2E7D32),
+                duration: const Duration(seconds: 5),
+              ),
+            );
+
+            // Navigate to email verification screen
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => EmailVerificationScreen(
+                  username: phoneNumber,
+                  email: _emailController.text.trim(),
+                ),
+              ),
+            );
+          }
+        } else {
+          // Registration complete, save additional profile data
+          await _saveAdditionalProfileData();
+
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+
+            // Show success message
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Welcome to KaziApp, $firstName! 🌾'),
+                backgroundColor: const Color(0xFF2E7D32),
+                duration: const Duration(seconds: 3),
+              ),
+            );
+
+            // Navigate to main app
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const MainNavigation(),
+              ),
+            );
+          }
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+
+          // Show error message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.error ?? 'Registration failed'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Registration failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _saveAdditionalProfileData() async {
+    try {
+      // Initialize profile service for additional data
       final profileService = FarmerProfileService();
       await profileService.initialize();
 
-      // Create farmer profile
+      // Save additional farmer profile data
       await profileService.createProfile(
         name: _nameController.text.trim(),
         phone: _phoneController.text.trim(),
@@ -534,6 +694,7 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
           'registrationMethod': 'mobile_app',
           'registrationDate': DateTime.now().toIso8601String(),
           'appVersion': '1.0.0',
+          'email': _emailController.text.trim(),
         },
       );
 
@@ -556,43 +717,9 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
           'onboardingCompleted': true,
         },
       );
-
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-
-        // Show success message with personalized content
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Welcome to KaziApp, ${_nameController.text.split(' ').first}! 🌾'),
-            backgroundColor: const Color(0xFF2E7D32),
-            duration: const Duration(seconds: 3),
-          ),
-        );
-
-        // Navigate to main app
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const MainNavigation(),
-          ),
-        );
-      }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-
-        // Show error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Registration failed: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      // Log error but don't fail registration
+      debugPrint('Failed to save additional profile data: $e');
     }
   }
 

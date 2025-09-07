@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 // Screens
 import 'screens/auth/login_screen.dart';
+import 'screens/auth/email_verification_screen.dart';
+import 'navigation/main_navigation.dart';
+
+// BLoC
+import 'features/auth/presentation/bloc/auth_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,21 +27,48 @@ class KaziApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'KaziApp Mkulima',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2E7D32), // Green for agriculture
+    return BlocProvider(
+      create: (context) => AuthBloc()..add(CheckAuthStatusEvent()),
+      child: MaterialApp(
+        title: 'KaziApp Mkulima',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF2E7D32), // Green for agriculture
+          ),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Color(0xFF2E7D32),
+            foregroundColor: Colors.white,
+            centerTitle: true,
+          ),
         ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF2E7D32),
-          foregroundColor: Colors.white,
-          centerTitle: true,
-        ),
+        home: const AuthWrapper(),
       ),
-      home: const SplashScreen(),
+    );
+  }
+}
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        if (state is AuthLoadingState || state is AuthInitialState) {
+          return const SplashScreen();
+        } else if (state is AuthenticatedState) {
+          return const MainNavigation();
+        } else if (state is EmailVerificationRequiredState) {
+          return EmailVerificationScreen(
+            username: state.username,
+            email: state.email,
+          );
+        } else {
+          return const LoginScreen();
+        }
+      },
     );
   }
 }
@@ -64,17 +97,6 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _animationController.forward();
-    _navigateToHome();
-  }
-
-  Future<void> _navigateToHome() async {
-    await Future.delayed(const Duration(seconds: 3));
-
-    if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
-    }
   }
 
   @override
