@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../../services/keycloak_auth_service.dart';
@@ -164,14 +166,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoadingState());
 
     try {
-      // Initialize Keycloak service
-      await _authService.initialize();
+      // Initialize Keycloak service with timeout
+      await _authService.initialize().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          debugPrint('⚠️ Keycloak initialization timeout, proceeding with offline mode');
+          throw TimeoutException('Keycloak initialization timeout');
+        },
+      );
 
       // Check if user is authenticated
-      final isAuthenticated = await _authService.isAuthenticated();
+      final isAuthenticated = await _authService.isAuthenticated().timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => false,
+      );
 
       if (isAuthenticated) {
-        final user = await _authService.getCurrentUser();
+        final user = await _authService.getCurrentUser().timeout(
+          const Duration(seconds: 3),
+          onTimeout: () => null,
+        );
+
         if (user != null) {
           emit(AuthenticatedState(
             userId: user.id,
@@ -185,7 +200,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(UnauthenticatedState());
       }
     } catch (e) {
-      emit(AuthErrorState(message: 'Failed to check auth status: ${e.toString()}'));
+      debugPrint('⚠️ Auth check failed, proceeding to login: ${e.toString()}');
+      // Don't show error, just proceed to login screen
+      emit(UnauthenticatedState());
     }
   }
 

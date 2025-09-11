@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'farmer_register_screen.dart';
+import 'registration/welcome_basic_info_screen.dart';
 import 'email_verification_screen.dart';
+import 'forgot_password_screen.dart';
 import '../../navigation/main_navigation.dart';
 import '../../services/keycloak_auth_service.dart';
 
@@ -96,6 +97,59 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _handleSSOLogin(String provider) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Initialize Keycloak service
+      await _authService.initialize();
+
+      AuthResult result;
+      switch (provider.toLowerCase()) {
+        case 'google':
+          result = await _authService.loginWithGoogle();
+          break;
+        case 'facebook':
+          result = await _authService.loginWithFacebook();
+          break;
+        case 'microsoft':
+          result = await _authService.loginWithMicrosoft();
+          break;
+        default:
+          result = AuthResult.error('Unsupported SSO provider: $provider');
+      }
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (result.success && result.user != null) {
+          // SSO login successful
+          _showMessage('Welcome, ${result.user!.firstName}!');
+
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const MainNavigation(),
+            ),
+          );
+        } else {
+          // SSO login failed
+          _showMessage(result.error ?? 'SSO login failed. Please try again.', isError: true);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        _showMessage('SSO login failed: ${e.toString()}', isError: true);
+      }
+    }
+  }
+
   void _showMessage(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -133,7 +187,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 10,
                               offset: const Offset(0, 5),
                             ),
@@ -147,19 +201,21 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 24),
                       const Text(
-                        'Welcome to KaziApp Mkulima',
+                        'Welcome Back!',
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF2E7D32),
+                          letterSpacing: -0.5,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Your Africa-First Agricultural Platform',
+                        'Sign in to continue to KaziApp Mkulima',
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.grey[600],
+                          height: 1.4,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -241,29 +297,45 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your password';
                     }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
+                    if (value.length < 14) {
+                      return 'Password must be at least 14 characters long';
                     }
                     return null;
                   },
                 ),
-                
-                const SizedBox(height: 8),
-                
-                // Forgot Password
+
+                const SizedBox(height: 16),
+
+                // Forgot Password Link (positioned above login button for better UX)
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
-                      _showForgotPasswordDialog();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordScreen(),
+                        ),
+                      );
                     },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
                     child: const Text(
                       'Forgot Password?',
-                      style: TextStyle(color: Color(0xFF2E7D32)),
+                      style: TextStyle(
+                        color: Color(0xFF2E7D32),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        decoration: TextDecoration.underline,
+                        decorationColor: Color(0xFF2E7D32),
+                      ),
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
                 
                 // Login Button
@@ -297,16 +369,149 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
+                // Divider with "OR"
+                Row(
+                  children: [
+                    const Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'OR',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const Expanded(child: Divider()),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // SSO Buttons
+                Column(
+                  children: [
+                    // Google Sign In
+                    SizedBox(
+                      height: 50,
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _isLoading ? null : () => _handleSSOLogin('google'),
+                        icon: Image.asset(
+                          'assets/icons/google.png',
+                          height: 20,
+                          width: 20,
+                          errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.g_mobiledata,
+                            color: Colors.red,
+                            size: 20,
+                          ),
+                        ),
+                        label: const Text(
+                          'Continue with Google',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.grey),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          backgroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Facebook Sign In
+                    SizedBox(
+                      height: 50,
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _isLoading ? null : () => _handleSSOLogin('facebook'),
+                        icon: Image.asset(
+                          'assets/icons/facebook.png',
+                          height: 20,
+                          width: 20,
+                          errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.facebook,
+                            color: Colors.blue,
+                            size: 20,
+                          ),
+                        ),
+                        label: const Text(
+                          'Continue with Facebook',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.grey),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          backgroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Microsoft Sign In
+                    SizedBox(
+                      height: 50,
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _isLoading ? null : () => _handleSSOLogin('microsoft'),
+                        icon: Image.asset(
+                          'assets/icons/microsoft.png',
+                          height: 20,
+                          width: 20,
+                          errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.business,
+                            color: Colors.blue,
+                            size: 20,
+                          ),
+                        ),
+                        label: const Text(
+                          'Continue with Microsoft',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.grey),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          backgroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 32),
+
                 // USSD Alternative
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
+                    color: Colors.orange.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                    border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
                   ),
                   child: const Column(
                     children: [
@@ -336,28 +541,45 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 32),
                 
                 // Register Link
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text("Don't have an account? "),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const FarmerRegisterScreen(),
-                          ),
-                        );
-                      },
-                      child: const Text(
-                        'Register',
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Don't have an account? ",
                         style: TextStyle(
-                          color: Color(0xFF2E7D32),
-                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Colors.grey,
                         ),
                       ),
-                    ),
-                  ],
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const WelcomeBasicInfoScreen(),
+                            ),
+                          );
+                        },
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Text(
+                          'Register Here',
+                          style: TextStyle(
+                            color: Color(0xFF2E7D32),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            decoration: TextDecoration.underline,
+                            decorationColor: Color(0xFF2E7D32),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -369,33 +591,5 @@ class _LoginScreenState extends State<LoginScreen> {
 
 
 
-  void _showForgotPasswordDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Reset Password'),
-        content: const Text(
-          'Enter your phone number and we\'ll send you an SMS with instructions to reset your password.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Password reset SMS sent!'),
-                  backgroundColor: Color(0xFF2E7D32),
-                ),
-              );
-            },
-            child: const Text('Send SMS'),
-          ),
-        ],
-      ),
-    );
-  }
+
 }

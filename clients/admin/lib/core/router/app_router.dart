@@ -6,6 +6,8 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/users/presentation/screens/users_screen.dart';
 import '../../features/analytics/presentation/screens/analytics_screen.dart';
+import '../../features/access_control/presentation/screens/access_control_screen.dart';
+import '../../features/service_providers/presentation/screens/service_provider_management_screen.dart';
 import '../../shared/widgets/admin_layout.dart';
 
 // Router Provider
@@ -72,6 +74,20 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: AppConstants.analyticsRoute,
             name: 'analytics',
             builder: (context, state) => const AnalyticsScreen(),
+          ),
+
+          // Access Control
+          GoRoute(
+            path: '/access-control',
+            name: 'access-control',
+            builder: (context, state) => const AccessControlScreen(),
+          ),
+
+          // Service Provider Management
+          GoRoute(
+            path: '/service-provider-management',
+            name: 'service-provider-management',
+            builder: (context, state) => const ServiceProviderManagementScreen(),
           ),
           
           // Settings
@@ -170,7 +186,15 @@ class AppNavigation {
   static void goToAnalytics(BuildContext context) {
     context.go(AppConstants.analyticsRoute);
   }
-  
+
+  static void goToAccessControl(BuildContext context) {
+    context.go('/access-control');
+  }
+
+  static void goToServiceProviderManagement(BuildContext context) {
+    context.go('/service-provider-management');
+  }
+
   static void goToSettings(BuildContext context) {
     context.go(AppConstants.settingsRoute);
   }

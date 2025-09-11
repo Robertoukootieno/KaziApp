@@ -235,6 +235,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   void _navigateToRegistration() {
-    Navigator.pushNamed(context, '/register');
+    Navigator.pushNamed(context, '/welcome-registration');
   }
 }

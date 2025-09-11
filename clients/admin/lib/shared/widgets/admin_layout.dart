@@ -35,6 +35,16 @@ class _AdminLayoutState extends State<AdminLayout> {
       route: AppConstants.analyticsRoute,
     ),
     NavigationItem(
+      icon: Icons.security,
+      label: 'Access Control',
+      route: '/access-control',
+    ),
+    NavigationItem(
+      icon: Icons.business_center,
+      label: 'Service Providers',
+      route: '/service-provider-management',
+    ),
+    NavigationItem(
       icon: Icons.settings,
       label: 'Settings',
       route: AppConstants.settingsRoute,

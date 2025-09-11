@@ -233,6 +233,17 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
     });
   }
 
+  bool _isMarketplaceServiceType(String serviceType) {
+    const marketplaceServiceTypes = [
+      'agrovet',
+      'feed_supplier',
+      'seeds_supplier',
+      'fertilizer_supplier',
+      'retailer',
+    ];
+    return marketplaceServiceTypes.contains(serviceType);
+  }
+
   Future<void> _completeRegistration() async {
     // Show loading
     showDialog(
@@ -248,13 +259,35 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
 
     if (mounted) {
       Navigator.of(context).pop(); // Remove loading dialog
-      
-      // Navigate to profile setup or dashboard
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/profile-setup',
-        (route) => false,
-      );
+
+      // Check service type and redirect to appropriate portal
+      final serviceType = _registrationData['serviceType'];
+      if (serviceType == 'veterinarian') {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/veterinary-dashboard',
+          (route) => false,
+        );
+      } else if (serviceType == 'machinery_provider') {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/machinery-dashboard',
+          (route) => false,
+        );
+      } else if (_isMarketplaceServiceType(serviceType)) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/marketplace-dashboard',
+          (route) => false,
+        );
+      } else {
+        // Navigate to profile setup or dashboard for other service types
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/profile-setup',
+          (route) => false,
+        );
+      }
     }
   }
 }

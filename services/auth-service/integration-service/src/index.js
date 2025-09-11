@@ -41,9 +41,11 @@ app.use(cors({
     'http://localhost:3012',  // Admin BFF
     'http://localhost:3002',  // Admin Dashboard
     'http://localhost:8080',  // Keycloak
+    /^http:\/\/127\.0\.0\.1:\d+$/, // Allow any port on 127.0.0.1 for Flutter development
+    /^http:\/\/localhost:\d+$/, // Allow any port on localhost for development
   ],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Client-Type'],
 }));
 
@@ -234,25 +236,13 @@ async function startServer() {
       KEYCLOAK_ADMIN_PASSWORD: process.env.KEYCLOAK_ADMIN_PASSWORD || 'admin_password',
     }, redisClient);
 
-    // Wait for Keycloak to be ready
-    let keycloakReady = false;
-    let attempts = 0;
-    const maxAttempts = 30;
-
-    while (!keycloakReady && attempts < maxAttempts) {
-      try {
-        await keycloakService.initialize();
-        keycloakReady = true;
-        logger.info('Keycloak service initialized successfully');
-      } catch (error) {
-        attempts++;
-        logger.warn(`Keycloak not ready, attempt ${attempts}/${maxAttempts}. Retrying in 5 seconds...`);
-        await new Promise(resolve => setTimeout(resolve, 5000));
-      }
-    }
-
-    if (!keycloakReady) {
-      throw new Error('Failed to connect to Keycloak after maximum attempts');
+    // Initialize Keycloak service (non-blocking for development)
+    try {
+      await keycloakService.initialize();
+      logger.info('Keycloak service initialized successfully');
+    } catch (error) {
+      logger.warn('Keycloak not available, starting service in limited mode:', error.message);
+      // Continue without Keycloak for development/testing
     }
     
     // Start server

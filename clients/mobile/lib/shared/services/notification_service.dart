@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz_data;
 // import 'package:firebase_messaging/firebase_messaging.dart'; // Disabled for now
 
 class NotificationService {
@@ -11,6 +14,9 @@ class NotificationService {
   // final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance; // Disabled for now
 
   Future<void> initialize() async {
+    // Initialize timezone data
+    tz_data.initializeTimeZones();
+
     // Initialize local notifications
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
@@ -18,7 +24,7 @@ class NotificationService {
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
-    
+
     const initSettings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
@@ -91,7 +97,7 @@ class NotificationService {
   */
 
   void _onNotificationTapped(NotificationResponse response) {
-    print('Local notification tapped: ${response.payload}');
+    debugPrint('Local notification tapped: ${response.payload}');
     // Handle local notification tap
   }
 
@@ -150,11 +156,17 @@ class NotificationService {
       iOS: iosDetails,
     );
 
+    // Convert DateTime to TZDateTime
+    final tz.TZDateTime scheduledTZTime = tz.TZDateTime.from(
+      scheduledTime,
+      tz.local,
+    );
+
     await _localNotifications.zonedSchedule(
       DateTime.now().millisecondsSinceEpoch.remainder(100000),
       title,
       body,
-      scheduledTime,
+      scheduledTZTime,
       notificationDetails,
       payload: payload,
       uiLocalNotificationDateInterpretation:

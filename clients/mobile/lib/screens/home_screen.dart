@@ -9,6 +9,7 @@ import 'settings/settings_screen.dart';
 import 'machinery/machinery_services_screen.dart';
 import '../services/farmer_profile_service.dart';
 import '../models/farmer_profile.dart';
+import '../widgets/profile_icon_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -29,17 +30,22 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadProfile() async {
-    try {
-      await _profileService.initialize();
-      setState(() {
-        _currentProfile = _profileService.currentProfile;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+    // Set loading to false immediately to show UI
+    setState(() {
+      _isLoading = false;
+    });
+
+    // Load profile in background
+    _profileService.initialize().then((_) {
+      if (mounted) {
+        setState(() {
+          _currentProfile = _profileService.currentProfile;
+        });
+      }
+    }).catchError((e) {
+      debugPrint('⚠️ Failed to load profile: $e');
+      // Continue without profile data
+    });
   }
 
   @override
@@ -57,93 +63,12 @@ class _HomeScreenState extends State<HomeScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          // User Profile Header
-          if (_currentProfile != null) ...[
-            Container(
-              margin: const EdgeInsets.only(right: 8),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // User Avatar and Name
-                  GestureDetector(
-                    onTap: () {
-                      _showProfileMenu(context);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CircleAvatar(
-                            radius: 16,
-                            backgroundColor: Colors.white,
-                            child: Text(
-                              _currentProfile!.name.split(' ')
-                                  .map((n) => n[0])
-                                  .take(2)
-                                  .join()
-                                  .toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF2E7D32),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _currentProfile!.name.split(' ').first,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              Text(
-                                _currentProfile!.farmingType.split(' ').first,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.white.withOpacity(0.8),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.arrow_drop_down,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ] else ...[
-            // Default actions when no profile
-            IconButton(
-              icon: const Icon(Icons.notifications_outlined),
-              onPressed: () {
-                _showNotifications(context);
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.language),
-              onPressed: () {
-                _showLanguageSelector(context);
-              },
-            ),
-          ],
+          // Profile Icon Widget
+          ProfileIconButton(
+            size: 36,
+            showNotificationBadge: true,
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: SingleChildScrollView(
