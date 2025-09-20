@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_constants.dart';
 
 class StatCard extends StatelessWidget {
   final String title;
@@ -24,37 +23,59 @@ class StatCard extends StatelessWidget {
     return Card(
       elevation: 2,
       child: Padding(
-        padding: const EdgeInsets.all(AppConstants.defaultPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
+        padding: const EdgeInsets.all(12.0),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isSmall = constraints.maxWidth < 150 || constraints.maxHeight < 120;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  icon,
-                  color: color,
-                  size: 32,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Icon(
+                      icon,
+                      color: color,
+                      size: isSmall ? 24 : 32,
+                    ),
+                    if (trend != null && !isSmall) _buildTrendIndicator(),
+                  ],
                 ),
-                if (trend != null) _buildTrendIndicator(),
+                const SizedBox(height: 8),
+                Flexible(
+                  child: Text(
+                    value,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: color,
+                          fontSize: isSmall ? 18 : null,
+                        ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Flexible(
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey.shade600,
+                          fontSize: isSmall ? 12 : null,
+                        ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (trend != null && isSmall) ...[
+                  const SizedBox(height: 4),
+                  _buildTrendIndicator(),
+                ],
               ],
-            ),
-            const SizedBox(height: AppConstants.smallPadding),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
-            ),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey.shade600,
-                  ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -69,7 +90,7 @@ class StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: trendColor.withOpacity(0.1),
+        color: trendColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

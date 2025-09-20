@@ -67,7 +67,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             end: Alignment.bottomRight,
             colors: [
               const Color(AppConstants.primaryColorValue),
-              const Color(AppConstants.primaryColorValue).withOpacity(0.8),
+              const Color(AppConstants.primaryColorValue).withValues(alpha: 0.8),
             ],
           ),
         ),

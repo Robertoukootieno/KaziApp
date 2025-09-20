@@ -20,7 +20,7 @@ class AccessControlScreen extends ConsumerStatefulWidget {
 class _AccessControlScreenState extends ConsumerState<AccessControlScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
-  String _searchQuery = '';
+  final String _searchQuery = '';
 
   final List<String> _tabs = [
     'User Access',
@@ -310,7 +310,7 @@ class _AccessControlScreenState extends ConsumerState<AccessControlScreen>
                 role.name.toUpperCase(),
                 style: const TextStyle(fontSize: 10),
               ),
-              backgroundColor: _getRoleColor(role).withOpacity(0.2),
+              backgroundColor: _getRoleColor(role).withValues(alpha: 0.2),
               labelStyle: TextStyle(color: _getRoleColor(role)),
             )).toList(),
           ),
@@ -323,7 +323,7 @@ class _AccessControlScreenState extends ConsumerState<AccessControlScreen>
                 platform.name.toUpperCase(),
                 style: const TextStyle(fontSize: 10),
               ),
-              backgroundColor: Colors.blue.withOpacity(0.2),
+              backgroundColor: Colors.blue.withValues(alpha: 0.2),
               labelStyle: const TextStyle(color: Colors.blue),
             )).toList(),
           ),
@@ -389,7 +389,7 @@ class _AccessControlScreenState extends ConsumerState<AccessControlScreen>
         label,
         style: const TextStyle(fontSize: 10),
       ),
-      backgroundColor: color.withOpacity(0.2),
+      backgroundColor: color.withValues(alpha: 0.2),
       labelStyle: TextStyle(color: color),
     );
   }

@@ -8,6 +8,7 @@ import 'profile/farmer_profile_screen.dart';
 import 'settings/settings_screen.dart';
 import 'machinery/machinery_services_screen.dart';
 import '../services/farmer_profile_service.dart';
+import '../services/user_profile_service.dart';
 import '../models/farmer_profile.dart';
 import '../widgets/profile_icon_widget.dart';
 
@@ -20,7 +21,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final FarmerProfileService _profileService = FarmerProfileService();
+  final UserProfileService _userProfileService = UserProfileService();
   FarmerProfile? _currentProfile;
+  UserProfile? _currentUser;
   bool _isLoading = true;
 
   @override
@@ -35,17 +38,23 @@ class _HomeScreenState extends State<HomeScreen> {
       _isLoading = false;
     });
 
-    // Load profile in background
-    _profileService.initialize().then((_) {
+    // Load profiles in background
+    try {
+      await Future.wait([
+        _profileService.initialize(),
+        _userProfileService.initialize(),
+      ]);
+
       if (mounted) {
         setState(() {
           _currentProfile = _profileService.currentProfile;
+          _currentUser = _userProfileService.currentUser;
         });
       }
-    }).catchError((e) {
-      debugPrint('⚠️ Failed to load profile: $e');
+    } catch (e) {
+      debugPrint('⚠️ Failed to load profiles: $e');
       // Continue without profile data
-    });
+    }
   }
 
   @override
@@ -62,13 +71,13 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: const Color(0xFF2E7D32),
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
+        actions: const [
           // Profile Icon Widget
           ProfileIconButton(
             size: 36,
             showNotificationBadge: true,
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
         ],
       ),
       body: SingleChildScrollView(
@@ -89,9 +98,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Karibu, Farmer!',
-                      style: TextStyle(
+                    Text(
+                      _getWelcomeMessage(),
+                      style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -102,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       'Your Africa-First Agricultural Platform',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha: 0.9),
                       ),
                     ),
                   ],
@@ -809,5 +818,23 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  /// Get personalized welcome message based on user profile
+  String _getWelcomeMessage() {
+    // Try to get first name from UserProfile first (from enhanced registration)
+    if (_currentUser != null && _currentUser!.fullName.isNotEmpty) {
+      final firstName = _currentUser!.fullName.split(' ').first;
+      return 'Karibu, $firstName!';
+    }
+
+    // Fallback to FarmerProfile (from basic registration)
+    if (_currentProfile != null && _currentProfile!.name.isNotEmpty) {
+      final firstName = _currentProfile!.name.split(' ').first;
+      return 'Karibu, $firstName!';
+    }
+
+    // Default fallback
+    return 'Karibu, Farmer!';
   }
 }

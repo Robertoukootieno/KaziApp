@@ -5,8 +5,10 @@ import '../services/zero_trust_auth_service.dart';
 import '../services/behavioral_biometrics_service.dart';
 import '../services/keycloak_auth_service.dart';
 import '../services/registration_security_service.dart';
+import '../screens/auth/enhanced_registration_screen.dart';
 
 /// Advanced Registration Widget with Enterprise-Grade Security
+/// Now supports hiding security widgets while maintaining all functionality
 class AdvancedRegistrationWidget extends StatefulWidget {
   final Function(Map<String, dynamic> registrationData, String sessionToken, int securityLevel) onRegistrationSuccess;
   final Function(String error) onRegistrationFailure;
@@ -14,6 +16,7 @@ class AdvancedRegistrationWidget extends StatefulWidget {
   final bool enableBehavioralBiometrics;
   final String registrationStep; // 'basic_info', 'identity_verification', 'password_setup'
   final Map<String, dynamic>? initialData; // Data from previous registration steps
+  final bool hideSecurityWidgets; // Hide security UI elements while keeping functionality
 
   const AdvancedRegistrationWidget({
     super.key,
@@ -23,6 +26,7 @@ class AdvancedRegistrationWidget extends StatefulWidget {
     this.enableBehavioralBiometrics = true,
     required this.registrationStep,
     this.initialData,
+    this.hideSecurityWidgets = false, // Default to showing security widgets
   });
 
   @override
@@ -58,8 +62,10 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
   
   // State
   bool _isLoading = false;
+  bool _isInitializing = true; // Track initialization state
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _passwordConfirmed = false; // Track if password has been confirmed
   int _securityLevel = 0;
   double _behavioralProgress = 0.0;
   double _registrationProgress = 0.0;
@@ -111,6 +117,30 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
     'Cattle', 'Goats', 'Sheep', 'Pigs', 'Chickens', 'Ducks', 'Turkeys',
     'Rabbits', 'Donkeys', 'Camels', 'Fish', 'Bees'
   ];
+
+  final List<String> _experienceLevels = [
+    'Beginner (0-2 years)',
+    'Intermediate (3-5 years)',
+    'Experienced (6-10 years)',
+    'Expert (10+ years)',
+  ];
+
+  final List<String> _languages = [
+    'English', 'Kiswahili', 'Kikuyu', 'Luo', 'Kalenjin', 'Kamba',
+  ];
+
+  final Map<String, String> _appServices = {
+    'AI Diagnosis': 'Get AI-powered disease diagnosis for your animals',
+    'Weather Updates': 'Receive localized weather forecasts and alerts',
+    'Market Prices': 'Track commodity prices and find buyers',
+    'Vet Services': 'Connect with veterinarians for consultations',
+    'Farm Records': 'Digital record keeping for your farm activities',
+    'SMS Alerts': 'Receive important notifications via SMS',
+  };
+
+  // Additional state variables
+  String _selectedExperienceLevel = '';
+  String _selectedLanguage = 'English';
   
   @override
   void initState() {
@@ -122,10 +152,18 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
       debugPrint('🔄 Initialized with registration data: $_registrationData');
     }
 
+    // Initialize selected services
+    for (String service in _appServices.keys) {
+      _selectedServices[service] = true; // Default all services to selected
+    }
+
+    // Initialize animations immediately (lightweight)
     _initializeAnimations();
-    _initializeServices();
-    _updateSecurityIndicators();
-    _startBehavioralTracking();
+
+    // Defer heavy initialization to after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _performAsyncInitialization();
+    });
   }
 
   @override
@@ -150,34 +188,89 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    
+
     _loadingAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    
+
     _progressAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
-    _securityAnimationController.repeat();
+
+    // Start with stable initial values instead of repeating animations
+    _securityAnimationController.value = 0.0;
+    _progressAnimationController.value = 0.0;
+  }
+
+  Future<void> _performAsyncInitialization() async {
+    try {
+      // Show that we're initializing
+      if (mounted) {
+        setState(() {
+          _isInitializing = true;
+        });
+      }
+
+      // Initialize services in parallel for better performance
+      await Future.wait([
+        _initializeServices(),
+        Future.delayed(const Duration(milliseconds: 50)), // Minimal loading time for smooth UX
+      ]);
+
+      // Update UI components after services are ready
+      if (mounted) {
+        // Defer heavy UI updates to improve perceived performance
+        _startBehavioralTracking();
+
+        setState(() {
+          _isInitializing = false;
+        });
+
+        // Update security indicators after UI is shown (lazy loading)
+        Future.microtask(() {
+          if (mounted) {
+            _updateSecurityIndicators();
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ Failed to initialize: $e');
+      if (mounted) {
+        setState(() {
+          _isInitializing = false;
+          _errorMessage = 'Failed to initialize security services. Please try again.';
+        });
+      }
+    }
   }
 
   Future<void> _initializeServices() async {
     try {
-      await _securityService.initialize();
-      await _behavioralService.initialize();
-      await _keycloakService.initialize();
-      await _registrationService.initialize();
+      // Initialize services in parallel with timeout for better performance
+      await Future.wait([
+        _securityService.initialize().timeout(const Duration(seconds: 3)),
+        _behavioralService.initialize().timeout(const Duration(seconds: 2)),
+        _keycloakService.initialize().timeout(const Duration(seconds: 4)),
+        _registrationService.initialize().timeout(const Duration(seconds: 2)),
+      ]).timeout(const Duration(seconds: 8)); // Overall timeout
 
-      setState(() {
-        _securityLevel = 75; // Base security level for registration
-      });
+      if (mounted) {
+        setState(() {
+          _securityLevel = 75; // Base security level for registration
+        });
 
-      _securityAnimationController.animateTo(_securityLevel / 100);
+        _securityAnimationController.animateTo(_securityLevel / 100);
+      }
     } catch (e) {
-      debugPrint('Failed to initialize security services: $e');
+      debugPrint('⚠️ Service initialization completed with some issues: $e');
+      // Continue with reduced functionality rather than failing completely
+      if (mounted) {
+        setState(() {
+          _securityLevel = 50; // Reduced security level if services fail
+        });
+      }
     }
   }
 
@@ -275,7 +368,7 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
       _errorMessage = null;
     });
 
-    _loadingAnimationController.repeat();
+    _loadingAnimationController.forward();
     
     try {
       // Record behavioral data
@@ -297,7 +390,11 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
           await _processIdentityVerification();
           break;
         case 'password_setup':
-          await _processPasswordSetup();
+          if (!_passwordConfirmed) {
+            await _confirmPassword();
+          } else {
+            await _continueToFarmDetails();
+          }
           break;
         case 'farm_info':
           await _processFarmInfo();
@@ -330,9 +427,24 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
 
     switch (widget.registrationStep) {
       case 'basic_info':
-        final isValid = _nameController.text.trim().isNotEmpty &&
-                       _phoneController.text.trim().isNotEmpty;
-        debugPrint('📝 Basic info validation: $isValid (name: ${_nameController.text.trim().isNotEmpty}, phone: ${_phoneController.text.trim().isNotEmpty})');
+        final nameValid = _nameController.text.trim().isNotEmpty;
+        final phoneValid = _phoneController.text.trim().isNotEmpty;
+        final emailValid = _emailController.text.trim().isNotEmpty &&
+                          RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(_emailController.text.trim());
+        final isValid = nameValid && phoneValid && emailValid;
+        debugPrint('📝 Basic info validation: $isValid (name: $nameValid, phone: $phoneValid, email: $emailValid)');
+
+        if (!isValid) {
+          setState(() {
+            if (!nameValid) {
+              _errorMessage = 'Full name is required';
+            } else if (!phoneValid) {
+              _errorMessage = 'Phone number is required';
+            } else if (!emailValid) {
+              _errorMessage = 'Valid email address is required';
+            }
+          });
+        }
         return isValid;
       case 'identity_verification':
         final bool codeSent = _registrationData.containsKey('verificationCodeSent');
@@ -352,10 +464,16 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
           return codeLength == 6;
         }
       case 'password_setup':
-        final isValid = _passwordController.text.length >= 14 &&
-                       _passwordController.text == _confirmPasswordController.text;
-        debugPrint('🔐 Password validation: $isValid');
-        return isValid;
+        if (!_passwordConfirmed) {
+          // For password confirmation step, validate password requirements
+          final isValid = _validatePasswordRequirements();
+          debugPrint('🔐 Password validation: $isValid');
+          return isValid;
+        } else {
+          // For continue to farm details step, password is already confirmed
+          debugPrint('🔐 Password already confirmed, ready to proceed');
+          return true;
+        }
       case 'farm_info':
         // Check if user has selected county or entered farm details
         final hasCounty = _selectedCounty.isNotEmpty;
@@ -514,6 +632,60 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
     widget.onRegistrationSuccess(_registrationData, sessionToken, _securityLevel);
   }
 
+  Future<void> _confirmPassword() async {
+    // This method handles the password confirmation step
+    debugPrint('🔐 Confirming password...');
+
+    // Validate password requirements using our comprehensive validation
+    if (!_validatePasswordRequirements()) {
+      debugPrint('❌ Password validation failed');
+      return;
+    }
+
+    // If validation passes, mark password as confirmed
+    setState(() {
+      _passwordConfirmed = true;
+      _successMessage = '✅ Password confirmed! You can now continue to farm details.';
+      _errorMessage = null;
+    });
+
+    debugPrint('✅ Password confirmed successfully');
+
+    // Brief delay to show success message
+    await Future.delayed(const Duration(milliseconds: 500));
+  }
+
+  Future<void> _continueToFarmDetails() async {
+    // This method handles continuing to farm details after password confirmation
+    debugPrint('🚜 Continuing to farm details...');
+
+    // Store password data for later use (when completing full registration)
+    _registrationData['password'] = _passwordController.text;
+    _registrationData['registrationStep'] = 'password_confirmed';
+
+    setState(() {
+      _successMessage = '🚜 Navigating to farm details...';
+      _errorMessage = null;
+    });
+
+    debugPrint('✅ Password data stored, ready for farm details');
+
+    // Brief delay to show success message
+    await Future.delayed(const Duration(milliseconds: 1000));
+
+    // Navigate to farm details using direct widget navigation
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => EnhancedRegistrationScreen(
+            registrationStep: 'farm_info',
+            initialData: _registrationData,
+          ),
+        ),
+      );
+    }
+  }
+
   Future<void> _processPasswordSetup() async {
     // Validate password strength
     final passwordValidation = await _securityService.validatePasswordStrength(
@@ -570,6 +742,11 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
 
   @override
   Widget build(BuildContext context) {
+    // Show loading screen during initialization
+    if (_isInitializing) {
+      return _buildInitializationLoader();
+    }
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -593,20 +770,30 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Security Level Indicator
-          _buildSecurityLevelIndicator(),
+          // Security Level Indicator (hidden if hideSecurityWidgets is true)
+          if (!widget.hideSecurityWidgets) ...[
+            _buildSecurityLevelIndicator(),
+            const SizedBox(height: 24),
+          ],
+
+          // Registration Progress (always show but with farmer-friendly styling when hidden)
+          widget.hideSecurityWidgets
+              ? _buildFarmerFriendlyProgress()
+              : _buildRegistrationProgress(),
 
           const SizedBox(height: 24),
 
-          // Registration Progress
-          _buildRegistrationProgress(),
+          // Security Indicators Grid (hidden if hideSecurityWidgets is true)
+          if (!widget.hideSecurityWidgets) ...[
+            _buildSecurityIndicators(),
+            const SizedBox(height: 32),
+          ],
 
-          const SizedBox(height: 24),
-
-          // Security Indicators Grid
-          _buildSecurityIndicators(),
-
-          const SizedBox(height: 32),
+          // Farmer Graphics (show when security widgets are hidden)
+          if (widget.hideSecurityWidgets) ...[
+            _buildFarmerMotivationalGraphics(),
+            const SizedBox(height: 24),
+          ],
 
           // Dynamic Form Fields based on registration step
           _buildStepFields(),
@@ -622,8 +809,13 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
 
           const SizedBox(height: 16),
 
-          // Behavioral Learning Progress
-          if (widget.enableBehavioralBiometrics) _buildBehavioralProgress(),
+          // Behavioral Learning Progress (hidden if hideSecurityWidgets is true)
+          if (widget.enableBehavioralBiometrics && !widget.hideSecurityWidgets)
+            _buildBehavioralProgress(),
+
+          // Farmer-friendly encouragement (show when security widgets are hidden)
+          if (widget.hideSecurityWidgets)
+            _buildFarmerEncouragement(),
         ],
       ),
     );
@@ -672,16 +864,11 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
 
                 const SizedBox(height: 8),
 
-                AnimatedBuilder(
-                  animation: _securityAnimationController,
-                  builder: (context, child) {
-                    return LinearProgressIndicator(
-                      value: _securityAnimationController.value,
-                      backgroundColor: Colors.grey[300],
-                      valueColor: AlwaysStoppedAnimation(_getSecurityLevelColor()),
-                      minHeight: 6,
-                    );
-                  },
+                LinearProgressIndicator(
+                  value: _securityLevel / 100.0,
+                  backgroundColor: Colors.grey[300],
+                  valueColor: AlwaysStoppedAnimation(_getSecurityLevelColor()),
+                  minHeight: 6,
                 ),
 
                 const SizedBox(height: 4),
@@ -729,16 +916,11 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
 
           const SizedBox(height: 12),
 
-          AnimatedBuilder(
-            animation: _progressAnimationController,
-            builder: (context, child) {
-              return LinearProgressIndicator(
-                value: _progressAnimationController.value,
-                backgroundColor: Colors.grey[300],
-                valueColor: AlwaysStoppedAnimation(Colors.green[600]),
-                minHeight: 8,
-              );
-            },
+          LinearProgressIndicator(
+            value: _registrationProgress,
+            backgroundColor: Colors.grey[300],
+            valueColor: AlwaysStoppedAnimation(Colors.green[600]),
+            minHeight: 8,
           ),
 
           const SizedBox(height: 8),
@@ -898,7 +1080,8 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
           controller: _emailController,
           keyboardType: TextInputType.emailAddress,
           decoration: InputDecoration(
-            labelText: 'Email Address (Optional)',
+            labelText: 'Email Address *',
+            hintText: 'Enter your email address',
             prefixIcon: const Icon(Icons.email),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -906,6 +1089,15 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
             filled: true,
             fillColor: Colors.white,
           ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Email address is required';
+            }
+            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
+              return 'Please enter a valid email address';
+            }
+            return null;
+          },
           onChanged: (_) => _recordKeystroke(),
         ),
       ],
@@ -1071,6 +1263,12 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
   }
 
   Widget _buildPasswordFields() {
+    if (_passwordConfirmed) {
+      // Show confirmation state with farm details preview
+      return _buildPasswordConfirmedState();
+    }
+
+    // Show password input state
     return Column(
       children: [
         TextFormField(
@@ -1093,8 +1291,16 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
             filled: true,
             fillColor: Colors.white,
           ),
-          onChanged: (_) => _recordKeystroke(),
+          onChanged: (_) {
+            _recordKeystroke();
+            setState(() {}); // Trigger rebuild for validation indicators
+          },
         ),
+
+        const SizedBox(height: 12),
+
+        // Password requirements indicators
+        _buildPasswordRequirementsIndicators(),
 
         const SizedBox(height: 16),
 
@@ -1118,9 +1324,98 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
             filled: true,
             fillColor: Colors.white,
           ),
-          onChanged: (_) => _recordKeystroke(),
+          onChanged: (_) {
+            _recordKeystroke();
+            setState(() {}); // Trigger rebuild for validation indicators
+          },
         ),
+
+        const SizedBox(height: 12),
+
+        // Password match indicator
+        _buildPasswordMatchIndicator(),
       ],
+    );
+  }
+
+  Widget _buildPasswordConfirmedState() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.green[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.green[300]!),
+      ),
+      child: Column(
+        children: [
+          // Success icon and message
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.green,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Password Confirmed Successfully!',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.green,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Next step preview
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.agriculture, color: Colors.green[600], size: 20),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Next: Farm Details',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'We\'ll collect information about your farm location, size, and farming activities to provide personalized services.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1194,26 +1489,23 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
           elevation: 2,
         ),
         child: _isLoading
-            ? AnimatedBuilder(
-                animation: _loadingAnimationController,
-                builder: (context, child) {
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: const AlwaysStoppedAnimation(Colors.white),
-                          value: _loadingAnimationController.value,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text('Processing...'),
-                    ],
-                  );
-                },
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation(Colors.white),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Processing...',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ],
               )
             : Text(_getButtonText()),
       ),
@@ -1317,7 +1609,7 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
           return 'Enter Verification Code';
         }
       case 'password_setup':
-        return 'Continue to Farm Details';
+        return _passwordConfirmed ? 'Continue to Farm Details' : 'Confirm Password';
       case 'farm_info':
         return 'Continue to Farming Details';
       case 'farming_details':
@@ -1330,6 +1622,23 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
   }
   // Farm Details Processing Methods
   Future<void> _processFarmInfo() async {
+    // Validate farm information
+    final bool countyValid = _selectedCounty.isNotEmpty;
+    final bool typeValid = _selectedFarmingType.isNotEmpty;
+    final bool nameValid = _farmNameController.text.trim().isNotEmpty || _registrationData['fullName'] != null;
+    final bool locationValid = _farmLocationController.text.trim().isNotEmpty || _selectedCounty.isNotEmpty;
+    final bool sizeValid = _farmSizeController.text.trim().isNotEmpty && double.tryParse(_farmSizeController.text) != null;
+
+    debugPrint('🚜 Farm info validation: ${countyValid && typeValid && nameValid && locationValid && sizeValid} (county: $countyValid, type: $typeValid, name: $nameValid, location: $locationValid, size: $sizeValid)');
+
+    if (!countyValid || !typeValid || !nameValid || !locationValid || !sizeValid) {
+      setState(() {
+        _errorMessage = 'Please fill in all required farm information fields';
+        _successMessage = null;
+      });
+      return;
+    }
+
     // Store farm information
     _registrationData.addAll({
       'farmName': _farmNameController.text.trim().isEmpty
@@ -1341,19 +1650,48 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
       'county': _selectedCounty.isEmpty ? 'Nairobi' : _selectedCounty,
       'farmSize': double.tryParse(_farmSizeController.text) ?? 1.0,
       'farmingType': _selectedFarmingType.isEmpty ? 'Mixed Farming' : _selectedFarmingType,
+      'experienceLevel': _selectedExperienceLevel.isEmpty ? 'Beginner (0-2 years)' : _selectedExperienceLevel,
       'registrationStep': 'farm_info_completed',
     });
 
     setState(() {
-      _successMessage = 'Farm information saved successfully! 🚜';
+      _successMessage = '✅ Farm information validated successfully! Proceeding to farming details...';
       _registrationProgress = 0.6;
+      _errorMessage = null;
     });
 
     _progressAnimationController.animateTo(_registrationProgress);
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 1500));
+
+    // Automatically proceed to farming details
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => EnhancedRegistrationScreen(
+            registrationStep: 'farming_details',
+            initialData: _registrationData,
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _processFarmingDetails() async {
+    // Validate farming details
+    final bool cropsValid = _selectedCrops.isNotEmpty;
+    final bool livestockValid = _selectedLivestock.isNotEmpty;
+    final bool hasSelection = cropsValid || livestockValid;
+
+    debugPrint('🌾 Farming details validation: $hasSelection (crops: $cropsValid [${_selectedCrops.length}], livestock: $livestockValid [${_selectedLivestock.length}])');
+
+    if (!hasSelection) {
+      setState(() {
+        _errorMessage = 'Please select at least one crop or livestock type';
+        _successMessage = null;
+      });
+      return;
+    }
+
     // Store farming details
     _registrationData.addAll({
       'crops': _selectedCrops,
@@ -1362,17 +1700,53 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
     });
 
     setState(() {
-      _successMessage = 'Farming details saved successfully! 🌾';
+      _successMessage = '✅ Farming details validated successfully! Proceeding to preferences...';
       _registrationProgress = 0.8;
+      _errorMessage = null;
     });
 
     _progressAnimationController.animateTo(_registrationProgress);
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 1500));
+
+    // Automatically proceed to preferences
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => EnhancedRegistrationScreen(
+            registrationStep: 'preferences',
+            initialData: _registrationData,
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _processPreferences() async {
+    // Validate preferences
+    final bool languageValid = _selectedLanguage.isNotEmpty;
+    final bool hasSelectedServices = _selectedServices.values.any((selected) => selected);
+
+    debugPrint('⚙️ Preferences validation: ${languageValid && hasSelectedServices} (language: $languageValid, services: $hasSelectedServices)');
+
+    if (!languageValid) {
+      setState(() {
+        _errorMessage = 'Please select a preferred language';
+        _successMessage = null;
+      });
+      return;
+    }
+
+    if (!hasSelectedServices) {
+      setState(() {
+        _errorMessage = 'Please select at least one service';
+        _successMessage = null;
+      });
+      return;
+    }
+
     // Store preferences and complete registration
     _registrationData.addAll({
+      'preferredLanguage': _selectedLanguage,
       'selectedServices': _selectedServices.entries
           .where((entry) => entry.value)
           .map((entry) => entry.key)
@@ -1382,9 +1756,10 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
     });
 
     setState(() {
-      _successMessage = 'Registration completed successfully! 🎉';
+      _successMessage = '✅ Preferences validated successfully! Completing registration...';
       _registrationProgress = 1.0;
       _securityLevel = 95; // Maximum security level
+      _errorMessage = null;
     });
 
     _progressAnimationController.animateTo(_registrationProgress);
@@ -1412,227 +1787,1124 @@ class _AdvancedRegistrationWidgetState extends State<AdvancedRegistrationWidget>
 
   // Farm Details UI Methods
   Widget _buildFarmInfoFields() {
-    return Column(
-      children: [
-        TextFormField(
-          controller: _farmNameController,
-          decoration: InputDecoration(
-            labelText: 'Farm Name (Optional)',
-            hintText: 'e.g., Green Valley Farm',
-            prefixIcon: const Icon(Icons.agriculture),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            filled: true,
-            fillColor: Colors.white,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header
+          const Icon(
+            Icons.agriculture,
+            size: 64,
+            color: Color(0xFF2E7D32),
           ),
-          onChanged: (_) => _recordKeystroke(),
-        ),
-        const SizedBox(height: 16),
+          const SizedBox(height: 16),
+          const Text(
+            'Tell us about your farm',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2E7D32),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Help us understand your farming operation',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
 
-        DropdownButtonFormField<String>(
-          initialValue: _selectedCounty.isEmpty ? null : _selectedCounty,
-          decoration: InputDecoration(
-            labelText: 'County',
-            prefixIcon: const Icon(Icons.location_on),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+          const SizedBox(height: 32),
+
+          // Farm Name Field
+          TextFormField(
+            controller: _farmNameController,
+            textCapitalization: TextCapitalization.words,
+            decoration: InputDecoration(
+              labelText: 'Farm Name',
+              hintText: 'e.g., Green Valley Farm',
+              prefixIcon: const Icon(Icons.home_work),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+              ),
             ),
-            filled: true,
-            fillColor: Colors.white,
+            onChanged: (_) => _recordKeystroke(),
           ),
-          items: _counties.map((county) {
-            return DropdownMenuItem(
-              value: county,
-              child: Text(county),
+
+          const SizedBox(height: 16),
+
+          // County Dropdown
+          DropdownButtonFormField<String>(
+            initialValue: _selectedCounty.isEmpty ? null : _selectedCounty,
+            decoration: InputDecoration(
+              labelText: 'County',
+              hintText: 'Select your county',
+              prefixIcon: const Icon(Icons.map),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+              ),
+            ),
+            items: _counties.map((String county) {
+              return DropdownMenuItem<String>(
+                value: county,
+                child: Text(county),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedCounty = newValue ?? '';
+              });
+            },
+          ),
+
+          const SizedBox(height: 16),
+
+          // Farm Location Field
+          TextFormField(
+            controller: _farmLocationController,
+            textCapitalization: TextCapitalization.words,
+            decoration: InputDecoration(
+              labelText: 'Specific Location',
+              hintText: 'e.g., Kiambu Town, near ABC School',
+              prefixIcon: const Icon(Icons.location_on),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+              ),
+            ),
+            onChanged: (_) => _recordKeystroke(),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Farm Size Field
+          TextFormField(
+            controller: _farmSizeController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: 'Farm Size (acres)',
+              hintText: 'e.g., 2.5',
+              prefixIcon: const Icon(Icons.landscape),
+              suffixText: 'acres',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+              ),
+            ),
+            onChanged: (_) => _recordKeystroke(),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Farming Type Selection
+          const Text(
+            'Primary Farming Type',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          ...List.generate(_farmingTypes.length, (index) {
+            final type = _farmingTypes[index];
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: _selectedFarmingType == type
+                      ? const Color(0xFF2E7D32)
+                      : Colors.grey[300]!,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: ListTile(
+                title: Text(type),
+                subtitle: Text(_getFarmingTypeDescription(type)),
+                leading: Icon(
+                  _selectedFarmingType == type
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: _selectedFarmingType == type
+                      ? const Color(0xFF2E7D32)
+                      : Colors.grey,
+                ),
+                onTap: () {
+                  setState(() {
+                    _selectedFarmingType = type;
+                  });
+                },
+              ),
             );
-          }).toList(),
-          onChanged: (value) {
-            setState(() {
-              _selectedCounty = value ?? '';
-            });
-          },
-        ),
-        const SizedBox(height: 16),
+          }),
 
-        TextFormField(
-          controller: _farmLocationController,
-          decoration: InputDecoration(
-            labelText: 'Specific Location (Optional)',
-            hintText: 'e.g., Kiambu Town, near ABC School',
-            prefixIcon: const Icon(Icons.place),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            filled: true,
-            fillColor: Colors.white,
-          ),
-          onChanged: (_) => _recordKeystroke(),
-        ),
-        const SizedBox(height: 16),
+          const SizedBox(height: 16),
 
-        DropdownButtonFormField<String>(
-          initialValue: _selectedFarmingType.isEmpty ? null : _selectedFarmingType,
-          decoration: InputDecoration(
-            labelText: 'Primary Farming Type',
-            prefixIcon: const Icon(Icons.eco),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+          // Experience Level Selection
+          const Text(
+            'Farming Experience',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
             ),
-            filled: true,
-            fillColor: Colors.white,
           ),
-          items: _farmingTypes.map((type) {
-            return DropdownMenuItem(
-              value: type,
-              child: Text(type),
-            );
-          }).toList(),
-          onChanged: (value) {
-            setState(() {
-              _selectedFarmingType = value ?? '';
-            });
-          },
-        ),
-        const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
-        TextFormField(
-          controller: _farmSizeController,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            labelText: 'Farm Size (Acres)',
-            hintText: 'e.g., 2.5',
-            prefixIcon: const Icon(Icons.straighten),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+          DropdownButtonFormField<String>(
+            initialValue: _selectedExperienceLevel.isEmpty ? null : _selectedExperienceLevel,
+            decoration: InputDecoration(
+              labelText: 'Experience Level',
+              hintText: 'Select your experience level',
+              prefixIcon: const Icon(Icons.star),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+              ),
             ),
-            filled: true,
-            fillColor: Colors.white,
+            items: _experienceLevels.map((String level) {
+              return DropdownMenuItem<String>(
+                value: level,
+                child: Text(level),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedExperienceLevel = newValue ?? '';
+              });
+            },
           ),
-          onChanged: (_) => _recordKeystroke(),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildFarmingDetailsFields() {
-    return Column(
-      children: [
-        const Text(
-          'Select Your Crops',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey[50],
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _cropOptions.map((crop) {
-              final isSelected = _selectedCrops.contains(crop);
-              return FilterChip(
-                label: Text(crop),
-                selected: isSelected,
-                onSelected: (bool selected) {
-                  setState(() {
-                    if (selected) {
-                      _selectedCrops.add(crop);
-                    } else {
-                      _selectedCrops.remove(crop);
-                    }
-                  });
-                },
-                selectedColor: const Color(0xFF2E7D32).withOpacity(0.2),
-                checkmarkColor: const Color(0xFF2E7D32),
-              );
-            }).toList(),
-          ),
-        ),
-        const SizedBox(height: 24),
+  String _getFarmingTypeDescription(String type) {
+    switch (type) {
+      case 'Crop Farming':
+        return 'Growing crops like maize, beans, vegetables';
+      case 'Livestock Farming':
+        return 'Raising cattle, goats, sheep for meat/milk';
+      case 'Mixed Farming':
+        return 'Combination of crops and livestock';
+      case 'Poultry Farming':
+        return 'Raising chickens, ducks, turkeys';
+      case 'Dairy Farming':
+        return 'Specialized in milk production';
+      case 'Fish Farming':
+        return 'Aquaculture and fish production';
+      case 'Horticulture':
+        return 'Fruits, vegetables, flowers cultivation';
+      case 'Agro-forestry':
+        return 'Trees integrated with crops/livestock';
+      default:
+        return 'Agricultural production';
+    }
+  }
 
-        const Text(
-          'Select Your Livestock',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+  Widget _buildFarmingDetailsFields() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header
+          const Icon(
+            Icons.eco,
+            size: 64,
+            color: Color(0xFF2E7D32),
           ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey[50],
-            borderRadius: BorderRadius.circular(12),
+          const SizedBox(height: 16),
+          const Text(
+            'What do you grow & raise?',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2E7D32),
+            ),
+            textAlign: TextAlign.center,
           ),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _livestockOptions.map((livestock) {
-              final isSelected = _selectedLivestock.contains(livestock);
-              return FilterChip(
-                label: Text(livestock),
-                selected: isSelected,
-                onSelected: (bool selected) {
-                  setState(() {
-                    if (selected) {
-                      _selectedLivestock.add(livestock);
-                    } else {
-                      _selectedLivestock.remove(livestock);
-                    }
-                  });
-                },
-                selectedColor: const Color(0xFF2E7D32).withOpacity(0.2),
-                checkmarkColor: const Color(0xFF2E7D32),
-              );
-            }).toList(),
+          const SizedBox(height: 8),
+          Text(
+            'Select your crops and livestock',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
           ),
-        ),
-      ],
+
+          const SizedBox(height: 32),
+
+          // Crops Section
+          const Row(
+            children: [
+              Icon(Icons.grass, color: Color(0xFF2E7D32)),
+              SizedBox(width: 8),
+              Text(
+                'Crops You Grow',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _cropOptions.map((crop) {
+                final isSelected = _selectedCrops.contains(crop);
+                return FilterChip(
+                  label: Text(crop),
+                  selected: isSelected,
+                  onSelected: (bool selected) {
+                    setState(() {
+                      if (selected) {
+                        _selectedCrops.add(crop);
+                      } else {
+                        _selectedCrops.remove(crop);
+                      }
+                    });
+                  },
+                  selectedColor: const Color(0xFF2E7D32).withValues(alpha: 0.2),
+                  checkmarkColor: const Color(0xFF2E7D32),
+                );
+              }).toList(),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Livestock Section
+          const Row(
+            children: [
+              Icon(Icons.pets, color: Color(0xFF2E7D32)),
+              SizedBox(width: 8),
+              Text(
+                'Livestock You Keep',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _livestockOptions.map((livestock) {
+                final isSelected = _selectedLivestock.contains(livestock);
+                return FilterChip(
+                  label: Text(livestock),
+                  selected: isSelected,
+                  onSelected: (bool selected) {
+                    setState(() {
+                      if (selected) {
+                        _selectedLivestock.add(livestock);
+                      } else {
+                        _selectedLivestock.remove(livestock);
+                      }
+                    });
+                  },
+                  selectedColor: const Color(0xFF2E7D32).withValues(alpha: 0.2),
+                  checkmarkColor: const Color(0xFF2E7D32),
+                );
+              }).toList(),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Quick Selection Buttons
+          const Text(
+            'Quick Selection',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _selectedCrops.clear();
+                      _selectedCrops.addAll(['Maize', 'Beans', 'Kales', 'Tomatoes']);
+                    });
+                  },
+                  icon: const Icon(Icons.grass),
+                  label: const Text('Common Crops'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF2E7D32),
+                    side: const BorderSide(color: Color(0xFF2E7D32)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _selectedLivestock.clear();
+                      _selectedLivestock.addAll(['Cattle', 'Goats', 'Chickens']);
+                    });
+                  },
+                  icon: const Icon(Icons.pets),
+                  label: const Text('Common Livestock'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF2E7D32),
+                    side: const BorderSide(color: Color(0xFF2E7D32)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Clear All Button
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _selectedCrops.clear();
+                _selectedLivestock.clear();
+              });
+            },
+            child: const Text(
+              'Clear All Selections',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Selection Summary
+          if (_selectedCrops.isNotEmpty || _selectedLivestock.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Your Selection Summary:',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2E7D32),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_selectedCrops.isNotEmpty)
+                    Text('Crops: ${_selectedCrops.join(', ')}'),
+                  if (_selectedLivestock.isNotEmpty)
+                    Text('Livestock: ${_selectedLivestock.join(', ')}'),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 
   Widget _buildPreferencesFields() {
-    final services = [
-      'AI Crop Diagnosis',
-      'Weather Updates',
-      'Market Prices',
-      'Veterinary Services',
-      'Equipment Rental',
-      'Expert Consultation',
-      'SMS Notifications',
-      'Email Updates',
-    ];
-
-    return Column(
-      children: [
-        const Text(
-          'Select Your Preferred Services',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header
+          const Icon(
+            Icons.settings,
+            size: 64,
+            color: Color(0xFF2E7D32),
           ),
-        ),
-        const SizedBox(height: 16),
-        ...services.map((service) {
-          return CheckboxListTile(
-            title: Text(service),
-            value: _selectedServices[service] ?? false,
-            onChanged: (bool? value) {
+          const SizedBox(height: 16),
+          const Text(
+            'Customize your experience',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2E7D32),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Choose services and preferences',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+
+          const SizedBox(height: 32),
+
+          // Language Selection
+          const Row(
+            children: [
+              Icon(Icons.language, color: Color(0xFF2E7D32)),
+              SizedBox(width: 8),
+              Text(
+                'Preferred Language',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          DropdownButtonFormField<String>(
+            initialValue: _selectedLanguage,
+            decoration: InputDecoration(
+              labelText: 'Language',
+              prefixIcon: const Icon(Icons.translate),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+              ),
+            ),
+            items: _languages.map((String language) {
+              return DropdownMenuItem<String>(
+                value: language,
+                child: Text(language),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
               setState(() {
-                _selectedServices[service] = value ?? false;
+                _selectedLanguage = newValue ?? 'English';
               });
             },
-            activeColor: const Color(0xFF2E7D32),
-          );
-        }),
-      ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // App Services Selection
+          const Row(
+            children: [
+              Icon(Icons.apps, color: Color(0xFF2E7D32)),
+              SizedBox(width: 8),
+              Text(
+                'App Services',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Select services you want to use (you can change these later)',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          ..._appServices.entries.map((service) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey[300]!),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: CheckboxListTile(
+                title: Text(
+                  service.key,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  service.value,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                value: _selectedServices[service.key] ?? false,
+                onChanged: (bool? value) {
+                  setState(() {
+                    _selectedServices[service.key] = value ?? false;
+                  });
+                },
+                activeColor: const Color(0xFF2E7D32),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+              ),
+            );
+          }),
+
+          const SizedBox(height: 16),
+
+          // Quick Selection Buttons
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    setState(() {
+                      for (String service in _appServices.keys) {
+                        _selectedServices[service] = true;
+                      }
+                    });
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF2E7D32),
+                    side: const BorderSide(color: Color(0xFF2E7D32)),
+                  ),
+                  child: const Text('Select All'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    setState(() {
+                      for (String service in _appServices.keys) {
+                        _selectedServices[service] = false;
+                      }
+                    });
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red,
+                    side: const BorderSide(color: Colors.red),
+                  ),
+                  child: const Text('Clear All'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build password requirements indicators
+  Widget _buildPasswordRequirementsIndicators() {
+    final password = _passwordController.text;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Password Requirements:',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildRequirementItem('At least 14 characters', password.length >= 14),
+          _buildRequirementItem('Uppercase letter (A-Z)', password.contains(RegExp(r'[A-Z]'))),
+          _buildRequirementItem('Lowercase letter (a-z)', password.contains(RegExp(r'[a-z]'))),
+          _buildRequirementItem('Number (0-9)', password.contains(RegExp(r'[0-9]'))),
+          _buildRequirementItem('Special character (!@#\$%^&*)', password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))),
+        ],
+      ),
+    );
+  }
+
+  /// Build individual requirement item
+  Widget _buildRequirementItem(String requirement, bool isMet) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Icon(
+            isMet ? Icons.check_circle : Icons.radio_button_unchecked,
+            size: 16,
+            color: isMet ? Colors.green : Colors.grey,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            requirement,
+            style: TextStyle(
+              fontSize: 12,
+              color: isMet ? Colors.green : Colors.grey[600],
+              fontWeight: isMet ? FontWeight.w500 : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build password match indicator
+  Widget _buildPasswordMatchIndicator() {
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    if (confirmPassword.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final isMatch = password == confirmPassword;
+
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: isMatch ? Colors.green[50] : Colors.red[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isMatch ? Colors.green : Colors.red,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isMatch ? Icons.check_circle : Icons.error,
+            size: 16,
+            color: isMatch ? Colors.green : Colors.red,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            isMatch ? 'Passwords match' : 'Passwords do not match',
+            style: TextStyle(
+              fontSize: 12,
+              color: isMatch ? Colors.green : Colors.red,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Comprehensive password validation
+  bool _validatePasswordRequirements() {
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    // Check if passwords match
+    if (password != confirmPassword) {
+      setState(() {
+        _errorMessage = 'Passwords do not match';
+      });
+      return false;
+    }
+
+    // Check minimum length
+    if (password.length < 14) {
+      setState(() {
+        _errorMessage = 'Password must be at least 14 characters long';
+      });
+      return false;
+    }
+
+    // Check for uppercase letters
+    if (!password.contains(RegExp(r'[A-Z]'))) {
+      setState(() {
+        _errorMessage = 'Password must contain at least one uppercase letter';
+      });
+      return false;
+    }
+
+    // Check for lowercase letters
+    if (!password.contains(RegExp(r'[a-z]'))) {
+      setState(() {
+        _errorMessage = 'Password must contain at least one lowercase letter';
+      });
+      return false;
+    }
+
+    // Check for numbers
+    if (!password.contains(RegExp(r'[0-9]'))) {
+      setState(() {
+        _errorMessage = 'Password must contain at least one number';
+      });
+      return false;
+    }
+
+    // Check for special characters
+    if (!password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
+      setState(() {
+        _errorMessage = 'Password must contain at least one special character (!@#\$%^&*(),.?":{}|<>)';
+      });
+      return false;
+    }
+
+    // Clear error message if all validations pass
+    setState(() {
+      _errorMessage = null;
+    });
+
+    return true;
+  }
+
+  // Farmer-friendly UI methods (shown when security widgets are hidden)
+  Widget _buildFarmerFriendlyProgress() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF4CAF50).withValues(alpha: 0.1),
+            const Color(0xFF2E7D32).withValues(alpha: 0.1),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF4CAF50).withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4CAF50),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(
+                  Icons.agriculture,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _getStepTitle(),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2E7D32),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _getStepDescription(),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          LinearProgressIndicator(
+            value: _registrationProgress,
+            backgroundColor: Colors.grey[300],
+            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF4CAF50)),
+            minHeight: 6,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFarmerMotivationalGraphics() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.green[50],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.green[200]!,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          // Farmer icon
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: const Color(0xFF4CAF50),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: const Icon(
+              Icons.person,
+              color: Colors.white,
+              size: 30,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Join the KaziApp Community!',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF2E7D32),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Connect with experts, access resources, and grow your farming success.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFarmerEncouragement() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.amber[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.amber[200]!,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.lightbulb_outline,
+            color: Colors.amber[700],
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _getEncouragementMessage(),
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.amber[800],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getStepTitle() {
+    switch (widget.registrationStep) {
+      case 'basic_info':
+        return 'Personal Information';
+      case 'identity_verification':
+        return 'Farm Details';
+      case 'password_setup':
+        return 'Account Setup';
+      default:
+        return 'Registration';
+    }
+  }
+
+  String _getStepDescription() {
+    switch (widget.registrationStep) {
+      case 'basic_info':
+        return 'Tell us about yourself to get started';
+      case 'identity_verification':
+        return 'Share your farming information with us';
+      case 'password_setup':
+        return 'Secure your account and complete setup';
+      default:
+        return 'Complete your registration';
+    }
+  }
+
+  String _getEncouragementMessage() {
+    final messages = [
+      'Your farming journey starts here! 🌱',
+      'Connect with agricultural experts and grow your knowledge! 📚',
+      'Access veterinary services and keep your livestock healthy! 🐄',
+      'Join thousands of successful farmers in Kenya! 🇰🇪',
+      'Get real-time market prices and maximize your profits! 💰',
+    ];
+    return messages[DateTime.now().millisecond % messages.length];
+  }
+
+  Widget _buildInitializationLoader() {
+    return Container(
+      padding: const EdgeInsets.all(40),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.green[50]!,
+            Colors.green[100]!,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.withValues(alpha: 0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Farmer avatar
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: const Color(0xFF4CAF50),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.green.withValues(alpha: 0.3),
+                  blurRadius: 15,
+                  spreadRadius: 3,
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.agriculture,
+              color: Colors.white,
+              size: 40,
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Loading indicator
+          const SizedBox(
+            width: 40,
+            height: 40,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              valueColor: AlwaysStoppedAnimation(Color(0xFF4CAF50)),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Loading text
+          const Text(
+            'Initializing Mkulima Connect',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF2E7D32),
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          Text(
+            'Setting up your secure farming experience...',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w400,
+            ),
+            textAlign: TextAlign.center,
+          ),
+
+          const SizedBox(height: 16),
+
+          // Progress steps
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildLoadingStep('Security', true),
+              const SizedBox(width: 8),
+              _buildLoadingStep('Services', true),
+              const SizedBox(width: 8),
+              _buildLoadingStep('Ready', false),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingStep(String label, bool isActive) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: isActive ? const Color(0xFF4CAF50) : Colors.grey[300],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          color: isActive ? Colors.white : Colors.grey[600],
+          fontWeight: FontWeight.w500,
+        ),
+      ),
     );
   }
 }

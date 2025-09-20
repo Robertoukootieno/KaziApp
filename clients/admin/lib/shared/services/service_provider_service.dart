@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/service_provider.dart';
+import 'api_service.dart';
 
 class ServiceProviderService {
   final Dio _dio;
@@ -363,6 +364,6 @@ class ServiceProviderService {
 
 // Provider
 final serviceProviderServiceProvider = Provider<ServiceProviderService>((ref) {
-  final dio = ref.watch(dioProvider);
-  return ServiceProviderService(dio);
+  final apiService = ref.watch(apiServiceProvider);
+  return ServiceProviderService(apiService.dio);
 });

@@ -1,51 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_chart/fl_chart.dart';
-import '../../../../core/constants/app_constants.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/stat_card.dart';
-import '../../../../shared/widgets/chart_card.dart';
 
-class DashboardScreen extends ConsumerStatefulWidget {
+class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
-  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
-}
-
-class _DashboardScreenState extends ConsumerState<DashboardScreen> {
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppConstants.defaultPadding),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Welcome Section
-            _buildWelcomeSection(),
-            const SizedBox(height: AppConstants.largePadding),
+            _buildWelcomeSection(context),
+            const SizedBox(height: 32),
             
             // Stats Overview
             _buildStatsOverview(),
-            const SizedBox(height: AppConstants.largePadding),
-            
-            // Charts Section
-            _buildChartsSection(),
-            const SizedBox(height: AppConstants.largePadding),
+            const SizedBox(height: 32),
             
             // Recent Activity
-            _buildRecentActivity(),
+            _buildRecentActivity(context),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildWelcomeSection() {
+  Widget _buildWelcomeSection(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(AppConstants.largePadding),
+        padding: const EdgeInsets.all(24.0),
         child: Row(
           children: [
             Expanded(
@@ -54,24 +41,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 children: [
                   Text(
                     'Welcome to KaziApp Admin',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                   ),
-                  const SizedBox(height: AppConstants.smallPadding),
+                  const SizedBox(height: 8),
                   Text(
                     'Monitor and manage your agricultural platform',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.grey.shade600,
+                          color: Colors.grey[600],
                         ),
                   ),
                 ],
               ),
             ),
-            Icon(
-              Icons.agriculture,
+            const Icon(
+              Icons.dashboard,
               size: 64,
-              color: Theme.of(context).primaryColor.withOpacity(0.3),
+              color: Colors.green,
             ),
           ],
         ),
@@ -83,64 +70,69 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Platform Overview',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        const SizedBox(height: AppConstants.defaultPadding),
+        const SizedBox(height: 16),
         LayoutBuilder(
           builder: (context, constraints) {
-            final isDesktop = constraints.maxWidth >= AppConstants.desktopBreakpoint;
-            final isTablet = constraints.maxWidth >= AppConstants.tabletBreakpoint;
-            
-            int crossAxisCount = 2;
-            if (isDesktop) {
+            final screenWidth = constraints.maxWidth;
+            int crossAxisCount;
+            double childAspectRatio;
+
+            if (screenWidth < 600) {
+              // Mobile: 1 card per row
+              crossAxisCount = 1;
+              childAspectRatio = 3.0;
+            } else if (screenWidth < 900) {
+              // Small tablet: 2 cards per row
+              crossAxisCount = 2;
+              childAspectRatio = 2.0;
+            } else if (screenWidth < 1200) {
+              // Large tablet: 2 cards per row
+              crossAxisCount = 2;
+              childAspectRatio = 1.8;
+            } else {
+              // Desktop: 4 cards per row
               crossAxisCount = 4;
-            } else if (isTablet) {
-              crossAxisCount = 3;
+              childAspectRatio = 1.5;
             }
-            
+
             return GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               crossAxisCount: crossAxisCount,
-              crossAxisSpacing: AppConstants.defaultPadding,
-              mainAxisSpacing: AppConstants.defaultPadding,
-              childAspectRatio: 1.5,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: childAspectRatio,
               children: [
                 StatCard(
-                  title: 'Total Users',
+                  title: 'Total Farmers',
                   value: '12,543',
                   icon: Icons.people,
-                  color: AppTheme.primarySwatch,
-                  trend: '+12%',
-                  isPositive: true,
-                ),
-                StatCard(
-                  title: 'Farmers',
-                  value: '8,234',
-                  icon: Icons.agriculture,
-                  color: Colors.green,
-                  trend: '+8%',
-                  isPositive: true,
+                  color: Colors.blue,
                 ),
                 StatCard(
                   title: 'Service Providers',
-                  value: '2,156',
+                  value: '1,234',
                   icon: Icons.business,
-                  color: Colors.blue,
-                  trend: '+15%',
-                  isPositive: true,
+                  color: Colors.green,
                 ),
                 StatCard(
-                  title: 'Active Sessions',
-                  value: '1,432',
-                  icon: Icons.online_prediction,
+                  title: 'Active Transactions',
+                  value: '8,765',
+                  icon: Icons.payment,
                   color: Colors.orange,
-                  trend: '-3%',
-                  isPositive: false,
+                ),
+                StatCard(
+                  title: 'System Health',
+                  value: '99.9%',
+                  icon: Icons.health_and_safety,
+                  color: Colors.red,
                 ),
               ],
             );
@@ -150,205 +142,40 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildChartsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Analytics',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        const SizedBox(height: AppConstants.defaultPadding),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isDesktop = constraints.maxWidth >= AppConstants.desktopBreakpoint;
-            
-            if (isDesktop) {
-              return Row(
-                children: [
-                  Expanded(child: _buildUserGrowthChart()),
-                  const SizedBox(width: AppConstants.defaultPadding),
-                  Expanded(child: _buildUserTypeChart()),
-                ],
-              );
-            } else {
-              return Column(
-                children: [
-                  _buildUserGrowthChart(),
-                  const SizedBox(height: AppConstants.defaultPadding),
-                  _buildUserTypeChart(),
-                ],
-              );
-            }
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildUserGrowthChart() {
-    return ChartCard(
-      title: 'User Growth',
-      child: SizedBox(
-        height: 300,
-        child: LineChart(
-          LineChartData(
-            gridData: const FlGridData(show: false),
-            titlesData: const FlTitlesData(show: false),
-            borderData: FlBorderData(show: false),
-            lineBarsData: [
-              LineChartBarData(
-                spots: const [
-                  FlSpot(0, 3),
-                  FlSpot(1, 4),
-                  FlSpot(2, 3.5),
-                  FlSpot(3, 5),
-                  FlSpot(4, 4.5),
-                  FlSpot(5, 6),
-                  FlSpot(6, 5.5),
-                ],
-                isCurved: true,
-                color: AppTheme.primarySwatch,
-                barWidth: 3,
-                dotData: const FlDotData(show: false),
-                belowBarData: BarAreaData(
-                  show: true,
-                  color: AppTheme.primarySwatch.withOpacity(0.2),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUserTypeChart() {
-    return ChartCard(
-      title: 'User Distribution',
-      child: SizedBox(
-        height: 300,
-        child: PieChart(
-          PieChartData(
-            sections: [
-              PieChartSectionData(
-                value: 65,
-                title: 'Farmers\n65%',
-                color: Colors.green,
-                radius: 100,
-              ),
-              PieChartSectionData(
-                value: 20,
-                title: 'Service\nProviders\n20%',
-                color: Colors.blue,
-                radius: 100,
-              ),
-              PieChartSectionData(
-                value: 10,
-                title: 'Buyers\n10%',
-                color: Colors.orange,
-                radius: 100,
-              ),
-              PieChartSectionData(
-                value: 5,
-                title: 'Others\n5%',
-                color: Colors.purple,
-                radius: 100,
-              ),
-            ],
-            centerSpaceRadius: 40,
-            sectionsSpace: 2,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecentActivity() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Recent Activity',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        const SizedBox(height: AppConstants.defaultPadding),
-        Card(
-          child: ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: 5,
-            separatorBuilder: (context, index) => const Divider(),
-            itemBuilder: (context, index) {
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: AppTheme.chartColors[index % AppTheme.chartColors.length].withOpacity(0.2),
-                  child: Icon(
-                    _getActivityIcon(index),
-                    color: AppTheme.chartColors[index % AppTheme.chartColors.length],
+  Widget _buildRecentActivity(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Recent Activity',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
-                ),
-                title: Text(_getActivityTitle(index)),
-                subtitle: Text(_getActivitySubtitle(index)),
-                trailing: Text(
-                  _getActivityTime(index),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey.shade600,
-                      ),
-                ),
-              );
-            },
-          ),
+            ),
+            const SizedBox(height: 16),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 5,
+              separatorBuilder: (context, index) => const Divider(),
+              itemBuilder: (context, index) {
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.green.withValues(alpha: 0.1),
+                    child: const Icon(Icons.person, color: Colors.green),
+                  ),
+                  title: Text('New farmer registration #${1000 + index}'),
+                  subtitle: Text('${index + 1} minutes ago'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                );
+              },
+            ),
+          ],
         ),
-      ],
+      ),
     );
-  }
-
-  IconData _getActivityIcon(int index) {
-    const icons = [
-      Icons.person_add,
-      Icons.business_center,
-      Icons.agriculture,
-      Icons.analytics,
-      Icons.security,
-    ];
-    return icons[index % icons.length];
-  }
-
-  String _getActivityTitle(int index) {
-    const titles = [
-      'New farmer registered',
-      'Service provider verified',
-      'Crop disease diagnosed',
-      'Monthly report generated',
-      'Security alert resolved',
-    ];
-    return titles[index % titles.length];
-  }
-
-  String _getActivitySubtitle(int index) {
-    const subtitles = [
-      'John Doe from Nakuru County',
-      'VetCare Services approved',
-      'Maize blight detected in Kiambu',
-      'User engagement metrics updated',
-      'Suspicious login attempt blocked',
-    ];
-    return subtitles[index % subtitles.length];
-  }
-
-  String _getActivityTime(int index) {
-    const times = [
-      '2 min ago',
-      '15 min ago',
-      '1 hour ago',
-      '3 hours ago',
-      '1 day ago',
-    ];
-    return times[index % times.length];
   }
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../models/user_profile.dart';
+import '../../services/user_profile_service.dart';
 
 class SelfRegistrationScreen extends StatefulWidget {
   const SelfRegistrationScreen({super.key});
@@ -780,45 +782,81 @@ class _SelfRegistrationScreenState extends State<SelfRegistrationScreen> {
       ),
     );
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      // Create user profile from registration data
+      final profileService = UserProfileService.instance;
 
-    if (mounted) {
-      Navigator.of(context).pop(); // Remove loading dialog
-
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Account created successfully!'),
-          backgroundColor: Color(0xFF388E3C),
-        ),
+      // Get the selected service category details
+      final selectedService = _serviceCategories.firstWhere(
+        (service) => service['id'] == _selectedServiceCategory,
+        orElse: () => {'name': _selectedServiceCategory},
       );
 
-      // Check service category and redirect to appropriate portal
-      if (_selectedServiceCategory == 'veterinary') {
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          '/veterinary-dashboard',
-          (route) => false,
+      // Create user profile
+      await profileService.createProfile(
+        email: _emailController.text.trim(),
+        profileType: UserProfileType.selfRegistered,
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        phoneNumber: _phoneController.text.trim(),
+        location: _locationController.text.trim(),
+        serviceType: _selectedServiceCategory,
+        serviceTypeName: selectedService['name'],
+        serviceCategories: [_selectedServiceCategory],
+        experience: _experienceController.text.trim(),
+        servicesOffered: _servicesController.text.trim(),
+      );
+
+      // Simulate API call
+      await Future.delayed(const Duration(seconds: 1));
+
+      if (mounted) {
+        Navigator.of(context).pop(); // Remove loading dialog
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Account created successfully!'),
+            backgroundColor: Color(0xFF388E3C),
+          ),
         );
-      } else if (_selectedServiceCategory == 'machinery') {
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          '/machinery-dashboard',
-          (route) => false,
-        );
-      } else if (_isMarketplaceServiceCategory(_selectedServiceCategory)) {
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          '/marketplace-dashboard',
-          (route) => false,
-        );
-      } else {
-        // Navigate to dashboard for other service types
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          '/dashboard',
-          (route) => false,
+
+        // Check service category and redirect to appropriate portal
+        if (_selectedServiceCategory == 'veterinary') {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/veterinary-dashboard',
+            (route) => false,
+          );
+        } else if (_selectedServiceCategory == 'machinery') {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/machinery-dashboard',
+            (route) => false,
+          );
+        } else if (_isMarketplaceServiceCategory(_selectedServiceCategory)) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/marketplace-dashboard',
+            (route) => false,
+          );
+        } else {
+          // Navigate to profile management for other service types
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/profile-management',
+            (route) => false,
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Remove loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Registration failed: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }

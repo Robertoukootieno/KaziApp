@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_chart/fl_chart.dart';
-import '../../../../core/constants/app_constants.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../shared/widgets/stat_card.dart';
-import '../../../../shared/widgets/chart_card.dart';
+
+import '../widgets/business_intelligence_widget.dart';
+import '../widgets/custom_dashboard_widget.dart';
+import '../widgets/data_export_widget.dart';
+import '../widgets/predictive_analytics_widget.dart';
+import '../widgets/user_behavior_widget.dart';
 
 class AnalyticsScreen extends ConsumerStatefulWidget {
   const AnalyticsScreen({super.key});
@@ -14,22 +15,13 @@ class AnalyticsScreen extends ConsumerStatefulWidget {
 }
 
 class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  String _selectedPeriod = '7d';
-
-  final List<String> _analyticsCategories = [
-    'Overview',
-    'Users',
-    'Engagement',
-    'Revenue',
-    'Performance',
-  ];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _analyticsCategories.length, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
   }
 
   @override
@@ -41,417 +33,522 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          // Header
-          _buildHeader(),
-          
-          // Period selector
-          _buildPeriodSelector(),
-          
-          // Tabs
-          _buildTabs(),
-          
-          // Content
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildOverviewTab(),
-                _buildUsersTab(),
-                _buildEngagementTab(),
-                _buildRevenueTab(),
-                _buildPerformanceTab(),
-              ],
+      appBar: AppBar(
+        title: const Text('Analytics Dashboard'),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        elevation: 0,
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabs: const [
+            Tab(
+              icon: Icon(Icons.dashboard),
+              text: 'Overview',
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(AppConstants.defaultPadding),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Analytics Dashboard',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              Text(
-                'Monitor platform performance and user behavior',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              OutlinedButton.icon(
-                onPressed: _exportReport,
-                icon: const Icon(Icons.download),
-                label: const Text('Export Report'),
-              ),
-              const SizedBox(width: AppConstants.smallPadding),
-              ElevatedButton.icon(
-                onPressed: _refreshData,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Refresh'),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPeriodSelector() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppConstants.defaultPadding),
-      child: Row(
-        children: [
-          const Text('Period: '),
-          const SizedBox(width: AppConstants.smallPadding),
-          SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: '24h', label: Text('24h')),
-              ButtonSegment(value: '7d', label: Text('7d')),
-              ButtonSegment(value: '30d', label: Text('30d')),
-              ButtonSegment(value: '90d', label: Text('90d')),
-              ButtonSegment(value: '1y', label: Text('1y')),
-            ],
-            selected: {_selectedPeriod},
-            onSelectionChanged: (Set<String> selection) {
-              setState(() {
-                _selectedPeriod = selection.first;
-              });
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabs() {
-    return Container(
-      margin: const EdgeInsets.all(AppConstants.defaultPadding),
-      child: TabBar(
-        controller: _tabController,
-        isScrollable: true,
-        tabs: _analyticsCategories.map((category) => Tab(text: category)).toList(),
-      ),
-    );
-  }
-
-  Widget _buildOverviewTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppConstants.defaultPadding),
-      child: Column(
-        children: [
-          // Key metrics
-          _buildKeyMetrics(),
-          const SizedBox(height: AppConstants.largePadding),
-          
-          // Charts
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isDesktop = constraints.maxWidth >= AppConstants.desktopBreakpoint;
-              
-              if (isDesktop) {
-                return Row(
-                  children: [
-                    Expanded(child: _buildTrafficChart()),
-                    const SizedBox(width: AppConstants.defaultPadding),
-                    Expanded(child: _buildDeviceChart()),
-                  ],
-                );
-              } else {
-                return Column(
-                  children: [
-                    _buildTrafficChart(),
-                    const SizedBox(height: AppConstants.defaultPadding),
-                    _buildDeviceChart(),
-                  ],
-                );
-              }
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildKeyMetrics() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= AppConstants.desktopBreakpoint;
-        final crossAxisCount = isDesktop ? 4 : 2;
-        
-        return GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: crossAxisCount,
-          crossAxisSpacing: AppConstants.defaultPadding,
-          mainAxisSpacing: AppConstants.defaultPadding,
-          childAspectRatio: 1.5,
-          children: [
-            StatCard(
-              title: 'Page Views',
-              value: '45.2K',
-              icon: Icons.visibility,
-              color: Colors.blue,
-              trend: '+12.5%',
-              isPositive: true,
+            Tab(
+              icon: Icon(Icons.people),
+              text: 'User Behavior',
             ),
-            StatCard(
-              title: 'Unique Visitors',
-              value: '12.8K',
-              icon: Icons.people,
-              color: Colors.green,
-              trend: '+8.2%',
-              isPositive: true,
+            Tab(
+              icon: Icon(Icons.business),
+              text: 'Business Intelligence',
             ),
-            StatCard(
-              title: 'Bounce Rate',
-              value: '32.1%',
-              icon: Icons.exit_to_app,
-              color: Colors.orange,
-              trend: '-2.1%',
-              isPositive: true,
+            Tab(
+              icon: Icon(Icons.trending_up),
+              text: 'Predictive Analytics',
             ),
-            StatCard(
-              title: 'Avg. Session',
-              value: '4m 32s',
-              icon: Icons.timer,
-              color: Colors.purple,
-              trend: '+15s',
-              isPositive: true,
+            Tab(
+              icon: Icon(Icons.dashboard_customize),
+              text: 'Custom Dashboard',
+            ),
+            Tab(
+              icon: Icon(Icons.file_download),
+              text: 'Data Export',
             ),
           ],
-        );
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: const [
+          _OverviewTab(),
+          _UserBehaviorTab(),
+          _BusinessIntelligenceTab(),
+          _PredictiveAnalyticsTab(),
+          _CustomDashboardTab(),
+          _DataExportTab(),
+        ],
+      ),
+    );
+  }
+}
+
+class _OverviewTab extends StatelessWidget {
+  const _OverviewTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Analytics Overview',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildSimpleAnalyticsStatsCards(),
+          const SizedBox(height: 32),
+          const Text(
+            'Key Metrics Summary',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const _MetricsSummaryCard(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSimpleAnalyticsStatsCards() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = constraints.maxWidth;
+
+        if (screenWidth < 600) {
+          // Mobile: Stack cards vertically
+          return Column(
+            children: [
+              _buildStatCard(
+                'Total Users',
+                '15,234',
+                '+8.7%',
+                Colors.blue,
+                Icons.people,
+              ),
+              const SizedBox(height: 16),
+              _buildStatCard(
+                'Revenue',
+                'KSh 2.4M',
+                '+15.2%',
+                Colors.green,
+                Icons.attach_money,
+              ),
+              const SizedBox(height: 16),
+              _buildStatCard(
+                'Engagement',
+                '68%',
+                '+2.1%',
+                Colors.orange,
+                Icons.trending_up,
+              ),
+              const SizedBox(height: 16),
+              _buildStatCard(
+                'Conversion',
+                '12.5%',
+                '+1.8%',
+                Colors.purple,
+                Icons.trending_up,
+              ),
+            ],
+          );
+        } else if (screenWidth < 900) {
+          // Tablet: 2x2 grid
+          return Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildStatCard(
+                      'Total Users',
+                      '15,234',
+                      '+8.7%',
+                      Colors.blue,
+                      Icons.people,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildStatCard(
+                      'Revenue',
+                      'KSh 2.4M',
+                      '+15.2%',
+                      Colors.green,
+                      Icons.attach_money,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildStatCard(
+                      'Engagement',
+                      '68%',
+                      '+2.1%',
+                      Colors.orange,
+                      Icons.trending_up,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildStatCard(
+                      'Conversion',
+                      '12.5%',
+                      '+1.8%',
+                      Colors.purple,
+                      Icons.trending_up,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        } else {
+          // Desktop: Single row
+          return Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  'Total Users',
+                  '15,234',
+                  '+8.7%',
+                  Colors.blue,
+                  Icons.people,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStatCard(
+                  'Revenue',
+                  'KSh 2.4M',
+                  '+15.2%',
+                  Colors.green,
+                  Icons.attach_money,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStatCard(
+                  'Engagement',
+                  '68%',
+                  '+2.1%',
+                  Colors.orange,
+                  Icons.trending_up,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStatCard(
+                  'Conversion',
+                  '12.5%',
+                  '+1.8%',
+                  Colors.purple,
+                  Icons.trending_up,
+                ),
+              ),
+            ],
+          );
+        }
       },
     );
   }
 
-  Widget _buildTrafficChart() {
-    return ChartCard(
-      title: 'Traffic Overview',
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.more_vert),
-          onPressed: () {},
-        ),
-      ],
-      child: SizedBox(
-        height: 300,
-        child: LineChart(
-          LineChartData(
-            gridData: FlGridData(
-              show: true,
-              drawVerticalLine: false,
-              horizontalInterval: 1000,
-              getDrawingHorizontalLine: (value) {
-                return FlLine(
-                  color: Colors.grey.shade300,
-                  strokeWidth: 1,
-                );
-              },
-            ),
-            titlesData: FlTitlesData(
-              show: true,
-              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 30,
-                  interval: 1,
-                  getTitlesWidget: (double value, TitleMeta meta) {
-                    const style = TextStyle(fontSize: 12);
-                    Widget text;
-                    switch (value.toInt()) {
-                      case 0:
-                        text = const Text('Mon', style: style);
-                        break;
-                      case 1:
-                        text = const Text('Tue', style: style);
-                        break;
-                      case 2:
-                        text = const Text('Wed', style: style);
-                        break;
-                      case 3:
-                        text = const Text('Thu', style: style);
-                        break;
-                      case 4:
-                        text = const Text('Fri', style: style);
-                        break;
-                      case 5:
-                        text = const Text('Sat', style: style);
-                        break;
-                      case 6:
-                        text = const Text('Sun', style: style);
-                        break;
-                      default:
-                        text = const Text('', style: style);
-                        break;
-                    }
-                    return SideTitleWidget(
-                      axisSide: meta.axisSide,
-                      child: text,
-                    );
-                  },
+  Widget _buildStatCard(String title, String value, String change, Color color, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Icon(icon, color: color, size: 24),
+              Text(
+                change,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
                 ),
               ),
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  interval: 1000,
-                  getTitlesWidget: (double value, TitleMeta meta) {
-                    return Text(
-                      '${(value / 1000).toInt()}K',
-                      style: const TextStyle(fontSize: 12),
-                    );
-                  },
-                  reservedSize: 42,
-                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetricsSummaryCard extends StatelessWidget {
+  const _MetricsSummaryCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Performance Summary',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            borderData: FlBorderData(show: false),
-            minX: 0,
-            maxX: 6,
-            minY: 0,
-            maxY: 6000,
-            lineBarsData: [
-              LineChartBarData(
-                spots: const [
-                  FlSpot(0, 3000),
-                  FlSpot(1, 4200),
-                  FlSpot(2, 3800),
-                  FlSpot(3, 5100),
-                  FlSpot(4, 4800),
-                  FlSpot(5, 5500),
-                  FlSpot(6, 4900),
-                ],
-                isCurved: true,
-                gradient: LinearGradient(
-                  colors: [
-                    AppTheme.primarySwatch,
-                    AppTheme.primarySwatch.withOpacity(0.3),
-                  ],
-                ),
-                barWidth: 3,
-                isStrokeCapRound: true,
-                dotData: const FlDotData(show: false),
-                belowBarData: BarAreaData(
-                  show: true,
-                  gradient: LinearGradient(
-                    colors: [
-                      AppTheme.primarySwatch.withOpacity(0.3),
-                      AppTheme.primarySwatch.withOpacity(0.1),
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildSummaryItem(
+                    'Total Users',
+                    '15,234',
+                    '+8.7%',
+                    Colors.blue,
+                    Icons.people,
                   ),
                 ),
-              ),
-            ],
-          ),
+                Expanded(
+                  child: _buildSummaryItem(
+                    'Revenue',
+                    'KSh 2.4M',
+                    '+15.2%',
+                    Colors.green,
+                    Icons.attach_money,
+                  ),
+                ),
+                Expanded(
+                  child: _buildSummaryItem(
+                    'Engagement',
+                    '68%',
+                    '+2.1%',
+                    Colors.orange,
+                    Icons.trending_up,
+                  ),
+                ),
+                Expanded(
+                  child: _buildSummaryItem(
+                    'Conversion',
+                    '12.5%',
+                    '+1.8%',
+                    Colors.purple,
+                    Icons.trending_up,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildDeviceChart() {
-    return ChartCard(
-      title: 'Device Usage',
-      child: SizedBox(
-        height: 300,
-        child: PieChart(
-          PieChartData(
-            sections: [
-              PieChartSectionData(
-                value: 45,
-                title: 'Mobile\n45%',
-                color: Colors.blue,
-                radius: 80,
-                titleStyle: const TextStyle(
-                  fontSize: 12,
+  Widget _buildSummaryItem(
+    String title,
+    String value,
+    String change,
+    Color color,
+    IconData icon,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(right: 16),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Icon(icon, color: color, size: 24),
+              Text(
+                change,
+                style: TextStyle(
+                  color: color,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              PieChartSectionData(
-                value: 35,
-                title: 'Desktop\n35%',
-                color: Colors.green,
-                radius: 80,
-                titleStyle: const TextStyle(
                   fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              PieChartSectionData(
-                value: 20,
-                title: 'Tablet\n20%',
-                color: Colors.orange,
-                radius: 80,
-                titleStyle: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
                 ),
               ),
             ],
-            centerSpaceRadius: 40,
-            sectionsSpace: 2,
           ),
-        ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
+}
 
-  Widget _buildUsersTab() {
-    return const Center(
-      child: Text('Users Analytics - Coming Soon'),
+class _UserBehaviorTab extends StatelessWidget {
+  const _UserBehaviorTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SingleChildScrollView(
+      padding: EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'User Behavior Analytics',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 24),
+          UserBehaviorWidget(),
+        ],
+      ),
     );
   }
+}
 
-  Widget _buildEngagementTab() {
-    return const Center(
-      child: Text('Engagement Analytics - Coming Soon'),
+class _BusinessIntelligenceTab extends StatelessWidget {
+  const _BusinessIntelligenceTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SingleChildScrollView(
+      padding: EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Business Intelligence',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 24),
+          BusinessIntelligenceWidget(),
+        ],
+      ),
     );
   }
+}
 
-  Widget _buildRevenueTab() {
-    return const Center(
-      child: Text('Revenue Analytics - Coming Soon'),
+class _PredictiveAnalyticsTab extends StatelessWidget {
+  const _PredictiveAnalyticsTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SingleChildScrollView(
+      padding: EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Predictive Analytics',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 24),
+          PredictiveAnalyticsWidget(),
+        ],
+      ),
     );
   }
+}
 
-  Widget _buildPerformanceTab() {
-    return const Center(
-      child: Text('Performance Analytics - Coming Soon'),
+class _CustomDashboardTab extends StatelessWidget {
+  const _CustomDashboardTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SingleChildScrollView(
+      padding: EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Custom Dashboard',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 24),
+          CustomDashboardWidget(),
+        ],
+      ),
     );
   }
+}
 
-  void _exportReport() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Export report functionality coming soon')),
-    );
-  }
+class _DataExportTab extends StatelessWidget {
+  const _DataExportTab();
 
-  void _refreshData() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Data refreshed successfully')),
+  @override
+  Widget build(BuildContext context) {
+    return const SingleChildScrollView(
+      padding: EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Data Export',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 24),
+          DataExportWidget(),
+        ],
+      ),
     );
   }
 }

@@ -3,12 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 // Screens
-import 'screens/auth/enhanced_login_screen.dart';
+import 'screens/auth/engaging_login_screen.dart';
 import 'screens/auth/email_verification_screen.dart';
 import 'navigation/main_navigation.dart';
 
 // BLoC
 import 'features/auth/presentation/bloc/auth_bloc.dart';
+
+// Widgets
+import 'widgets/mkulima_connect_logo.dart';
 
 // Performance
 
@@ -22,18 +25,18 @@ void main() async {
   ]);
 
   // Start app immediately without waiting for orientation
-  runApp(const KaziApp());
+  runApp(const MkulimaConnectApp());
 }
 
-class KaziApp extends StatelessWidget {
-  const KaziApp({super.key});
+class MkulimaConnectApp extends StatelessWidget {
+  const MkulimaConnectApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => AuthBloc(),
       child: MaterialApp(
-        title: 'KaziApp Mkulima',
+        title: 'Mkulima Connect',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,
@@ -103,7 +106,7 @@ class _OptimizedAuthWrapperState extends State<OptimizedAuthWrapper> {
             email: state.email,
           );
         } else {
-          return const EnhancedLoginScreen();
+          return const EngagingLoginScreen();
         }
       },
     );
@@ -121,40 +124,15 @@ class FastSplashScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Simple logo without complex decorations
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(
-                Icons.agriculture,
-                size: 50,
-                color: Color(0xFF2E7D32),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // App name
-            const Text(
-              'KaziApp',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // Simple tagline
-            const Text(
-              'Empowering African Farmers',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.white70,
-              ),
+            // Mkulima Connect Logo
+            const MkulimaConnectLogo(
+              width: 120,
+              height: 120,
+              showText: true,
+              textColor: Colors.white,
+              fontSize: 28,
+              showTagline: true,
+              tagline: 'Connecting Farmers with Agricultural Services',
             ),
             const SizedBox(height: 40),
 
@@ -216,37 +194,15 @@ class _SplashScreenState extends State<SplashScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // App Logo
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.agriculture,
-                  size: 60,
-                  color: Color(0xFF2E7D32),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // App Name
-              const Text(
-                'KaziApp',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+              // Mkulima Connect Logo
+              const MkulimaConnectLogo(
+                width: 140,
+                height: 140,
+                showText: true,
+                textColor: Colors.white,
+                fontSize: 32,
+                showTagline: true,
+                tagline: 'Connecting Farmers with Agricultural Services',
               ),
               const SizedBox(height: 8),
 

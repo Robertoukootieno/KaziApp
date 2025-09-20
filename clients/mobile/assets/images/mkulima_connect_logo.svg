@@ -1,0 +1,29 @@
+<svg width="400" height="200" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Leaf shape with gradient -->
+  <defs>
+    <linearGradient id="leafGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7CB342;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2E7D32;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Leaf background -->
+  <path d="M 50 50 Q 120 30 150 80 Q 140 130 100 140 Q 60 120 50 50 Z" fill="url(#leafGradient)"/>
+  
+  <!-- Network nodes and connections -->
+  <g fill="white" stroke="white" stroke-width="3">
+    <!-- Connection lines -->
+    <line x1="80" y1="70" x2="100" y2="90" />
+    <line x1="100" y1="90" x2="120" y2="110" />
+    <line x1="80" y1="70" x2="120" y2="110" />
+    
+    <!-- Nodes -->
+    <circle cx="80" cy="70" r="8" />
+    <circle cx="100" cy="90" r="8" />
+    <circle cx="120" cy="110" r="8" />
+  </g>
+  
+  <!-- Text -->
+  <text x="180" y="90" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#2E7D32">Mkulima</text>
+  <text x="180" y="140" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#2E7D32">Connect</text>
+</svg>

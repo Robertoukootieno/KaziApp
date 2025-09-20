@@ -3,18 +3,50 @@ class AppConstants {
   static const String appName = 'KaziApp Admin';
   static const String appVersion = '1.0.0';
   static const String appDescription = 'Administrative dashboard for KaziApp agricultural platform';
-  
+  static const String buildNumber = '1.0.0+1';
+
+  // Environment Configuration
+  static const String environment = String.fromEnvironment('ENVIRONMENT', defaultValue: 'development');
+  static const bool isProduction = environment == 'production';
+  static const bool isDevelopment = environment == 'development';
+  static const bool isStaging = environment == 'staging';
+
   // API Configuration
-  static const String baseUrl = 'http://localhost:3000/api';
+  static const String baseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:3000/api');
   static const String adminApiUrl = '$baseUrl/admin';
   static const String userApiUrl = '$baseUrl/users';
   static const String analyticsApiUrl = '$baseUrl/analytics';
-  
+  static const String farmerApiUrl = '$baseUrl/farmers';
+  static const String serviceProviderApiUrl = '$baseUrl/service-providers';
+  static const String transactionApiUrl = '$baseUrl/transactions';
+  static const String notificationApiUrl = '$baseUrl/notifications';
+  static const String auditApiUrl = '$baseUrl/audit';
+  static const String systemApiUrl = '$baseUrl/system';
+
+  // WebSocket Configuration
+  static const String wsBaseUrl = String.fromEnvironment('WS_BASE_URL', defaultValue: 'ws://localhost:3000');
+  static const String adminWsUrl = '$wsBaseUrl/admin';
+
   // Storage Keys
   static const String authTokenKey = 'admin_auth_token';
   static const String refreshTokenKey = 'admin_refresh_token';
   static const String userDataKey = 'admin_user_data';
   static const String themeKey = 'admin_theme_mode';
+  static const String languageKey = 'admin_language';
+  static const String notificationSettingsKey = 'admin_notification_settings';
+  static const String dashboardConfigKey = 'admin_dashboard_config';
+  static const String sessionKey = 'admin_session';
+  static const String mfaSecretKey = 'admin_mfa_secret';
+
+  // Security Configuration
+  static const int tokenExpiryMinutes = 60;
+  static const int refreshTokenExpiryDays = 30;
+  static const int sessionTimeoutMinutes = 120;
+  static const int maxLoginAttempts = 5;
+  static const int lockoutDurationMinutes = 30;
+  static const int passwordMinLength = 12;
+  static const int mfaCodeLength = 6;
+  static const int mfaCodeExpirySeconds = 300;
   
   // Routes
   static const String loginRoute = '/login';

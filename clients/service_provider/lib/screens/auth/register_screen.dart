@@ -353,7 +353,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 
                 // Register Button
                 ElevatedButton(
-                  onPressed: () => Navigator.pushNamed(context, '/register'),
+                  onPressed: () => Navigator.pushNamed(context, '/welcome-registration'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2E7D32),
                     foregroundColor: Colors.white,

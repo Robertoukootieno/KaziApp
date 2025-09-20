@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../models/machinery_models.dart';
 import 'equipment_management_screen.dart';
 import 'rental_bookings_screen.dart';
@@ -9,6 +8,7 @@ import 'logistics_screen.dart';
 import 'financial_screen.dart';
 import 'customers_screen.dart';
 import 'reports_screen.dart';
+import '../../../widgets/profile_app_bar.dart';
 
 class MachineryDashboardScreen extends StatefulWidget {
   const MachineryDashboardScreen({super.key});
@@ -198,6 +198,10 @@ class _MachineryDashboardScreenState extends State<MachineryDashboardScreen> {
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
+      appBar: const ProfileAppBar(
+        title: 'Machinery Provider',
+        backgroundColor: Color(0xFFFF8F00),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(

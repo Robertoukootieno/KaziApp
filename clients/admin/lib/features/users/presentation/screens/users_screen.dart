@@ -302,7 +302,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen>
         statuses[statusIndex],
         style: const TextStyle(fontSize: 12),
       ),
-      backgroundColor: colors[statusIndex].withOpacity(0.2),
+      backgroundColor: colors[statusIndex].withValues(alpha: 0.2),
       labelStyle: TextStyle(color: colors[statusIndex]),
     );
   }

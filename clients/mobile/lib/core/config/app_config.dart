@@ -75,7 +75,7 @@ class AppConfig extends ChangeNotifier {
   bool get isAIEnabled => true;
   
   // App metadata
-  String get appName => 'KaziApp';
+  String get appName => 'Mkulima Connect';
   String get appVersion => '1.0.0';
   String get appBuildNumber => '1';
   

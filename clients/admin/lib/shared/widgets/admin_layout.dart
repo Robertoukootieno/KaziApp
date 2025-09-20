@@ -30,9 +30,34 @@ class _AdminLayoutState extends State<AdminLayout> {
       route: AppConstants.usersRoute,
     ),
     NavigationItem(
+      icon: Icons.agriculture,
+      label: 'Farmers',
+      route: '/farmers',
+    ),
+    NavigationItem(
+      icon: Icons.how_to_reg,
+      label: 'Registration Approvals',
+      route: '/registration-approvals',
+    ),
+    NavigationItem(
+      icon: Icons.business_center,
+      label: 'Service Providers',
+      route: '/service-provider-management',
+    ),
+    NavigationItem(
       icon: Icons.analytics,
       label: 'Analytics',
       route: AppConstants.analyticsRoute,
+    ),
+    NavigationItem(
+      icon: Icons.account_balance,
+      label: 'Financial',
+      route: '/financial',
+    ),
+    NavigationItem(
+      icon: Icons.content_paste,
+      label: 'Content',
+      route: '/content',
     ),
     NavigationItem(
       icon: Icons.security,
@@ -40,9 +65,14 @@ class _AdminLayoutState extends State<AdminLayout> {
       route: '/access-control',
     ),
     NavigationItem(
-      icon: Icons.business_center,
-      label: 'Service Providers',
-      route: '/service-provider-management',
+      icon: Icons.settings_applications,
+      label: 'System',
+      route: '/system',
+    ),
+    NavigationItem(
+      icon: Icons.assignment,
+      label: 'Audit',
+      route: '/audit',
     ),
     NavigationItem(
       icon: Icons.settings,

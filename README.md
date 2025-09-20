@@ -63,15 +63,32 @@ KaziApp is a comprehensive agricultural platform designed specifically for Afric
 - Kubernetes (for production)
 
 ### Development Setup
+
+#### Option 1: Using New Docker Infrastructure (Recommended)
 ```bash
 # Clone the repository
 git clone <repository-url>
 cd KaziApp
 
-# Install dependencies
-npm run install:all
+# Navigate to Docker infrastructure
+cd infrastructure/docker
+
+# Copy environment template
+cp .env.example .env
+
+# Edit environment variables
+nano .env
 
 # Start development environment
+./scripts/start-dev.sh
+
+# Check service health
+./scripts/health-check.sh
+```
+
+#### Option 2: Traditional Setup
+```bash
+# Start databases only
 docker-compose up -d
 
 # Run mobile app
@@ -80,6 +97,10 @@ flutter run
 
 # Run web app
 cd clients/web
+npm run dev
+
+# Run backend
+cd backend
 npm run dev
 ```
 
@@ -90,14 +111,20 @@ KaziApp/
 ├── clients/                 # Client applications
 │   ├── mobile/             # Flutter mobile app
 │   ├── web/                # React.js web app
+│   ├── admin/              # Admin dashboard
+│   ├── service_provider/   # Service provider app
 │   └── ussd/               # USSD gateway
 ├── services/               # Microservices
 │   ├── api-gateway/        # API gateway
-│   ├── user-service/       # User & vet registration
-│   ├── matching-service/   # Vet-farmer matching
+│   ├── user-service/       # User management
+│   ├── auth-service/       # Authentication
+│   ├── matchmaking-service/# Vet-farmer matching
 │   ├── communication/      # Chat, voice, video
 │   ├── ai-diagnostics/     # AI disease detection
 │   ├── marketplace/        # Farmer-buyer marketplace
+│   ├── payment-service/    # M-Pesa & payments
+│   ├── notification/       # Push notifications
+│   └── farm-management/    # Farm operations
 │   ├── farm-management/    # Farm calculations & data
 │   ├── payment-service/    # M-Pesa & payment processing
 │   ├── notification/       # SMS, push, WhatsApp
@@ -133,6 +160,46 @@ npm run test
 # Run service-specific tests
 cd services/user-service
 npm test
+```
+
+## 🐳 Docker Infrastructure
+
+The project now features a clean, well-structured Docker setup located in `infrastructure/docker/`:
+
+### Directory Structure
+```
+infrastructure/docker/
+├── .env.example              # Environment variables template
+├── docker-compose.yml        # Main orchestration file
+├── README.md                 # Docker documentation
+├── scripts/                  # Utility scripts
+│   ├── build-all.sh         # Build all services
+│   ├── start-dev.sh         # Start development environment
+│   ├── cleanup.sh           # Clean up containers/volumes
+│   └── health-check.sh      # Monitor service health
+├── databases/               # Database configurations
+│   ├── postgres/           # PostgreSQL with PostGIS
+│   ├── mongodb/            # MongoDB with validation
+│   └── redis/              # Redis caching
+├── services/               # Service Dockerfiles
+├── clients/                # Client Dockerfiles
+└── nginx/                  # Reverse proxy configuration
+```
+
+### Quick Docker Commands
+```bash
+# Start development environment
+cd infrastructure/docker
+./scripts/start-dev.sh
+
+# Check service health
+./scripts/health-check.sh
+
+# Clean up everything
+./scripts/cleanup.sh
+
+# Build all services
+./scripts/build-all.sh
 ```
 
 ## 🌐 Deployment

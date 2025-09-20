@@ -38,8 +38,8 @@ class AppSizes {
 }
 
 class AppStrings {
-  static const String appName = 'KaziApp';
-  static const String tagline = 'Empowering African Farmers';
+  static const String appName = 'Mkulima Connect';
+  static const String tagline = 'Connecting Farmers with Agricultural Services';
   
   // Common
   static const String loading = 'Loading...';

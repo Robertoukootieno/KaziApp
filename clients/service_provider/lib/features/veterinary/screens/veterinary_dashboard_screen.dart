@@ -9,6 +9,7 @@ import 'vaccination_scheduler_screen.dart';
 import 'billing_screen.dart';
 import 'reports_screen.dart';
 import 'client_communication_screen.dart';
+import '../../../widgets/profile_app_bar.dart';
 
 class VeterinaryDashboardScreen extends StatefulWidget {
   const VeterinaryDashboardScreen({super.key});
@@ -121,6 +122,10 @@ class _VeterinaryDashboardScreenState extends State<VeterinaryDashboardScreen> {
   Widget _buildDashboardHome() {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
+      appBar: const ProfileAppBar(
+        title: 'Veterinary Dashboard',
+        backgroundColor: Color(0xFF2E7D32),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(

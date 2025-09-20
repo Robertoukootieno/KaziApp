@@ -7,11 +7,18 @@ import 'screens/auth/registration_flow_screen.dart';
 import 'screens/auth/self_registration_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/profile/profile_setup_screen.dart';
+import 'screens/profile/profile_management_screen.dart';
 import 'features/veterinary/screens/veterinary_dashboard_screen.dart';
 import 'features/machinery/screens/machinery_dashboard_screen.dart';
 import 'features/marketplace/screens/marketplace_dashboard_screen.dart';
+import 'services/user_profile_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize user profile service
+  await UserProfileService.instance.initialize();
+
   runApp(const KaziAppServiceProvider());
 }
 
@@ -77,6 +84,7 @@ class KaziAppServiceProvider extends StatelessWidget {
         '/machinery-dashboard': (context) => const MachineryDashboardScreen(),
         '/marketplace-dashboard': (context) => const MarketplaceDashboardScreen(),
         '/profile-setup': (context) => const ProfileSetupScreen(),
+        '/profile-management': (context) => const ProfileManagementScreen(),
       },
     );
   }

@@ -49,7 +49,7 @@ class _ServiceProviderManagementScreenState extends ConsumerState<ServiceProvide
         firstName: 'Provider',
         lastName: '$i',
         phoneNumber: '+254712345${i.toString().padLeft(3, '0')}',
-        profilePicture: 'https://via.placeholder.com/150',
+        profilePicture: '',
         providerType: ServiceProviderType.values[i % ServiceProviderType.values.length],
         verificationStatus: VerificationStatus.values[i % VerificationStatus.values.length],
         businessRegistration: BusinessRegistration(
@@ -370,7 +370,12 @@ class _ServiceProviderManagementScreenState extends ConsumerState<ServiceProvide
             children: [
               CircleAvatar(
                 radius: 16,
-                backgroundImage: NetworkImage(provider.profilePicture),
+                backgroundImage: provider.profilePicture.isNotEmpty
+                    ? NetworkImage(provider.profilePicture)
+                    : null,
+                child: provider.profilePicture.isEmpty
+                    ? Text('${provider.firstName[0]}${provider.lastName[0]}')
+                    : null,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -500,7 +505,7 @@ class _ServiceProviderManagementScreenState extends ConsumerState<ServiceProvide
         ServiceProviderHelper.getVerificationStatusLabel(status),
         style: const TextStyle(fontSize: 10),
       ),
-      backgroundColor: color.withOpacity(0.2),
+      backgroundColor: color.withValues(alpha: 0.2),
       labelStyle: TextStyle(color: color),
     );
   }

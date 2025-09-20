@@ -297,7 +297,7 @@ class _EnhancedLoginScreenState extends State<EnhancedLoginScreen>
         const SizedBox(height: 24),
         
         const Text(
-          'KaziApp Mkulima',
+          'Mkulima Connect',
           style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.w700,

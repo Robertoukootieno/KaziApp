@@ -8,6 +8,8 @@ import '../../features/users/presentation/screens/users_screen.dart';
 import '../../features/analytics/presentation/screens/analytics_screen.dart';
 import '../../features/access_control/presentation/screens/access_control_screen.dart';
 import '../../features/service_providers/presentation/screens/service_provider_management_screen.dart';
+import '../../features/service_providers/presentation/screens/registration_approval_screen.dart';
+
 import '../../shared/widgets/admin_layout.dart';
 
 // Router Provider
@@ -83,13 +85,75 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const AccessControlScreen(),
           ),
 
+          // Registration Approvals
+          GoRoute(
+            path: '/registration-approvals',
+            name: 'registration-approvals',
+            builder: (context, state) => const RegistrationApprovalScreen(),
+          ),
+
           // Service Provider Management
           GoRoute(
             path: '/service-provider-management',
             name: 'service-provider-management',
             builder: (context, state) => const ServiceProviderManagementScreen(),
           ),
-          
+
+          // Farmer Management
+          GoRoute(
+            path: '/farmers',
+            name: 'farmer-management',
+            builder: (context, state) => const Scaffold(
+              body: Center(
+                child: Text('Farmer Management Screen'),
+              ),
+            ),
+          ),
+
+          // Financial Management
+          GoRoute(
+            path: '/financial',
+            name: 'financial-management',
+            builder: (context, state) => const Scaffold(
+              body: Center(
+                child: Text('Financial Management Screen'),
+              ),
+            ),
+          ),
+
+          // Content Management
+          GoRoute(
+            path: '/content',
+            name: 'content-management',
+            builder: (context, state) => const Scaffold(
+              body: Center(
+                child: Text('Content Management Screen'),
+              ),
+            ),
+          ),
+
+          // System Configuration
+          GoRoute(
+            path: '/system',
+            name: 'system-configuration',
+            builder: (context, state) => const Scaffold(
+              body: Center(
+                child: Text('System Configuration Screen'),
+              ),
+            ),
+          ),
+
+          // Audit & Compliance
+          GoRoute(
+            path: '/audit',
+            name: 'audit-compliance',
+            builder: (context, state) => const Scaffold(
+              body: Center(
+                child: Text('Audit & Compliance Screen'),
+              ),
+            ),
+          ),
+
           // Settings
           GoRoute(
             path: AppConstants.settingsRoute,
@@ -100,7 +164,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ),
           ),
-          
+
           // Profile
           GoRoute(
             path: AppConstants.profileRoute,

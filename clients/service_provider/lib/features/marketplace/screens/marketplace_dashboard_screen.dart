@@ -7,6 +7,7 @@ import 'inventory_screen.dart';
 import 'customer_management_screen.dart';
 import 'analytics_screen.dart';
 import 'promotions_screen.dart';
+import '../../../widgets/profile_app_bar.dart';
 
 class MarketplaceDashboardScreen extends StatefulWidget {
   const MarketplaceDashboardScreen({super.key});
@@ -106,11 +107,9 @@ class _MarketplaceDashboardScreenState extends State<MarketplaceDashboardScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        title: const Text('Marketplace Dashboard'),
+      appBar: ProfileAppBar(
+        title: 'Marketplace Dashboard',
         backgroundColor: const Color(0xFF1976D2),
-        foregroundColor: Colors.white,
-        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications),

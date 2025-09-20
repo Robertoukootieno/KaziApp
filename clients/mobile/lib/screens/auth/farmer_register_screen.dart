@@ -819,6 +819,181 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
     }
   }
 
+  Widget _buildFarmInfoPage() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Farm Information',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2E7D32),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Tell us more about your farm',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+
+          // Farm Name Field
+          TextFormField(
+            controller: _farmNameController,
+            textCapitalization: TextCapitalization.words,
+            decoration: InputDecoration(
+              labelText: 'Farm Name (Optional)',
+              hintText: 'e.g., Green Valley Farm',
+              prefixIcon: const Icon(Icons.agriculture),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // County Dropdown
+          DropdownButtonFormField<String>(
+            value: _selectedCounty.isEmpty ? null : _selectedCounty,
+            decoration: InputDecoration(
+              labelText: 'County *',
+              prefixIcon: const Icon(Icons.location_on),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+              ),
+            ),
+            items: _kenyanCounties.map((county) {
+              return DropdownMenuItem(
+                value: county,
+                child: Text(county),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                _selectedCounty = value ?? '';
+              });
+            },
+          ),
+
+          const SizedBox(height: 16),
+
+          // Farm Location Field
+          TextFormField(
+            controller: _farmLocationController,
+            textCapitalization: TextCapitalization.words,
+            decoration: InputDecoration(
+              labelText: 'Specific Location (Optional)',
+              hintText: 'e.g., Kiambu, Thika Road',
+              prefixIcon: const Icon(Icons.place),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Farm Size Field
+          TextFormField(
+            controller: _farmSizeController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: 'Farm Size (Acres) *',
+              hintText: 'e.g., 2.5',
+              prefixIcon: const Icon(Icons.straighten),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Farming Type Dropdown
+          DropdownButtonFormField<String>(
+            value: _selectedFarmingType.isEmpty ? null : _selectedFarmingType,
+            decoration: InputDecoration(
+              labelText: 'Primary Farming Type *',
+              prefixIcon: const Icon(Icons.eco),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+              ),
+            ),
+            items: _farmingTypes.map((type) {
+              return DropdownMenuItem(
+                value: type,
+                child: Text(type),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                _selectedFarmingType = value ?? '';
+              });
+            },
+          ),
+
+          const SizedBox(height: 16),
+
+          // Experience Level Dropdown
+          DropdownButtonFormField<String>(
+            value: _selectedExperienceLevel.isEmpty ? null : _selectedExperienceLevel,
+            decoration: InputDecoration(
+              labelText: 'Experience Level *',
+              prefixIcon: const Icon(Icons.school),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+              ),
+            ),
+            items: _experienceLevels.map((level) {
+              return DropdownMenuItem(
+                value: level,
+                child: Text(level),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                _selectedExperienceLevel = value ?? '';
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showUSSDInstructions() {
     showDialog(
       context: context,
@@ -848,231 +1023,14 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
     );
   }
 
-  Widget _buildFarmInfoPage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header
-          const Icon(
-            Icons.agriculture,
-            size: 64,
-            color: Color(0xFF2E7D32),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Tell us about your farm',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF2E7D32),
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Help us understand your farming operation',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-            ),
-            textAlign: TextAlign.center,
-          ),
-
-          const SizedBox(height: 32),
-
-          // Farm Name Field
-          TextFormField(
-            controller: _farmNameController,
-            textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              labelText: 'Farm Name',
-              hintText: 'e.g., Green Valley Farm',
-              prefixIcon: const Icon(Icons.home_work),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // County Dropdown
-          DropdownButtonFormField<String>(
-            initialValue: _selectedCounty.isEmpty ? null : _selectedCounty,
-            decoration: InputDecoration(
-              labelText: 'County',
-              hintText: 'Select your county',
-              prefixIcon: const Icon(Icons.map),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
-              ),
-            ),
-            items: _kenyanCounties.map((String county) {
-              return DropdownMenuItem<String>(
-                value: county,
-                child: Text(county),
-              );
-            }).toList(),
-            onChanged: (String? newValue) {
-              setState(() {
-                _selectedCounty = newValue ?? '';
-              });
-            },
-          ),
-
-          const SizedBox(height: 16),
-
-          // Farm Location Field
-          TextFormField(
-            controller: _farmLocationController,
-            textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              labelText: 'Specific Location',
-              hintText: 'e.g., Kiambu Town, near ABC School',
-              prefixIcon: const Icon(Icons.location_on),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Farm Size Field
-          TextFormField(
-            controller: _farmSizeController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: 'Farm Size (acres)',
-              hintText: 'e.g., 2.5',
-              prefixIcon: const Icon(Icons.landscape),
-              suffixText: 'acres',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Farming Type Selection
-          const Text(
-            'Primary Farming Type',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          ...List.generate(_farmingTypes.length, (index) {
-            final type = _farmingTypes[index];
-            return Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: _selectedFarmingType == type
-                      ? const Color(0xFF2E7D32)
-                      : Colors.grey[300]!,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: ListTile(
-                title: Text(type),
-                subtitle: Text(_getFarmingTypeDescription(type)),
-                leading: Icon(
-                  _selectedFarmingType == type
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_unchecked,
-                  color: _selectedFarmingType == type
-                      ? const Color(0xFF2E7D32)
-                      : Colors.grey,
-                ),
-                onTap: () {
-                  setState(() {
-                    _selectedFarmingType = type;
-                  });
-                },
-              ),
-            );
-          }),
-
-          const SizedBox(height: 16),
-
-          // Experience Level Selection
-          const Text(
-            'Farming Experience',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          DropdownButtonFormField<String>(
-            initialValue: _selectedExperienceLevel.isEmpty ? null : _selectedExperienceLevel,
-            decoration: InputDecoration(
-              labelText: 'Experience Level',
-              hintText: 'Select your experience level',
-              prefixIcon: const Icon(Icons.star),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
-              ),
-            ),
-            items: _experienceLevels.map((String level) {
-              return DropdownMenuItem<String>(
-                value: level,
-                child: Text(level),
-              );
-            }).toList(),
-            onChanged: (String? newValue) {
-              setState(() {
-                _selectedExperienceLevel = newValue ?? '';
-              });
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildFarmingDetailsPage() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header
-          const Icon(
-            Icons.eco,
-            size: 64,
-            color: Color(0xFF2E7D32),
-          ),
-          const SizedBox(height: 16),
           const Text(
-            'What do you grow & raise?',
+            'Farming Details',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -1082,204 +1040,102 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Select your crops and livestock',
+            'What do you grow or raise?',
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey[600],
             ),
             textAlign: TextAlign.center,
           ),
-
           const SizedBox(height: 32),
 
           // Crops Section
-          const Row(
-            children: [
-              Icon(Icons.grass, color: Color(0xFF2E7D32)),
-              SizedBox(width: 8),
-              Text(
-                'Crops You Grow',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[300]!),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _cropOptions.map((crop) {
-                final isSelected = _selectedCrops.contains(crop);
-                return FilterChip(
-                  label: Text(crop),
-                  selected: isSelected,
-                  onSelected: (bool selected) {
-                    setState(() {
-                      if (selected) {
-                        _selectedCrops.add(crop);
-                      } else {
-                        _selectedCrops.remove(crop);
-                      }
-                    });
-                  },
-                  selectedColor: const Color(0xFF2E7D32).withOpacity(0.2),
-                  checkmarkColor: const Color(0xFF2E7D32),
-                );
-              }).toList(),
+          const Text(
+            'Crops (Select all that apply)',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF2E7D32),
             ),
           ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _cropOptions.map((crop) {
+              final isSelected = _selectedCrops.contains(crop);
+              return FilterChip(
+                label: Text(crop),
+                selected: isSelected,
+                onSelected: (selected) {
+                  setState(() {
+                    if (selected) {
+                      _selectedCrops.add(crop);
+                    } else {
+                      _selectedCrops.remove(crop);
+                    }
+                  });
+                },
+                selectedColor: const Color(0xFF2E7D32).withOpacity(0.2),
+                checkmarkColor: const Color(0xFF2E7D32),
+              );
+            }).toList(),
+          ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
 
           // Livestock Section
-          const Row(
-            children: [
-              Icon(Icons.pets, color: Color(0xFF2E7D32)),
-              SizedBox(width: 8),
-              Text(
-                'Livestock You Keep',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+          const Text(
+            'Livestock (Select all that apply)',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF2E7D32),
+            ),
           ),
-          const SizedBox(height: 12),
-
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[300]!),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _livestockOptions.map((livestock) {
-                final isSelected = _selectedLivestock.contains(livestock);
-                return FilterChip(
-                  label: Text(livestock),
-                  selected: isSelected,
-                  onSelected: (bool selected) {
-                    setState(() {
-                      if (selected) {
-                        _selectedLivestock.add(livestock);
-                      } else {
-                        _selectedLivestock.remove(livestock);
-                      }
-                    });
-                  },
-                  selectedColor: const Color(0xFF2E7D32).withOpacity(0.2),
-                  checkmarkColor: const Color(0xFF2E7D32),
-                );
-              }).toList(),
-            ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _livestockOptions.map((livestock) {
+              final isSelected = _selectedLivestock.contains(livestock);
+              return FilterChip(
+                label: Text(livestock),
+                selected: isSelected,
+                onSelected: (selected) {
+                  setState(() {
+                    if (selected) {
+                      _selectedLivestock.add(livestock);
+                    } else {
+                      _selectedLivestock.remove(livestock);
+                    }
+                  });
+                },
+                selectedColor: const Color(0xFF2E7D32).withOpacity(0.2),
+                checkmarkColor: const Color(0xFF2E7D32),
+              );
+            }).toList(),
           ),
 
           const SizedBox(height: 24),
 
-          // Quick Selection Buttons
-          const Text(
-            'Quick Selection',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+          // Note
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.blue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.blue.withOpacity(0.3)),
             ),
-          ),
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _selectedCrops.clear();
-                      _selectedCrops.addAll(['Maize', 'Beans', 'Kales', 'Tomatoes']);
-                    });
-                  },
-                  icon: const Icon(Icons.grass),
-                  label: const Text('Common Crops'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF2E7D32),
-                    side: const BorderSide(color: Color(0xFF2E7D32)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _selectedLivestock.clear();
-                      _selectedLivestock.addAll(['Cattle', 'Goats', 'Chickens']);
-                    });
-                  },
-                  icon: const Icon(Icons.pets),
-                  label: const Text('Common Livestock'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF2E7D32),
-                    side: const BorderSide(color: Color(0xFF2E7D32)),
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // Clear All Button
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _selectedCrops.clear();
-                _selectedLivestock.clear();
-              });
-            },
             child: const Text(
-              'Clear All Selections',
-              style: TextStyle(color: Colors.red),
+              'Select at least one crop or livestock to continue. You can always update this information later.',
+              style: TextStyle(
+                color: Colors.blue,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
-
-          const SizedBox(height: 16),
-
-          // Selection Summary
-          if (_selectedCrops.isNotEmpty || _selectedLivestock.isNotEmpty)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2E7D32).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Your Selection Summary:',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2E7D32),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  if (_selectedCrops.isNotEmpty)
-                    Text('Crops: ${_selectedCrops.join(', ')}'),
-                  if (_selectedLivestock.isNotEmpty)
-                    Text('Livestock: ${_selectedLivestock.join(', ')}'),
-                ],
-              ),
-            ),
         ],
       ),
     );
@@ -1291,15 +1147,8 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header
-          const Icon(
-            Icons.settings,
-            size: 64,
-            color: Color(0xFF2E7D32),
-          ),
-          const SizedBox(height: 16),
           const Text(
-            'Customize your experience',
+            'App Preferences',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -1309,37 +1158,30 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Choose services and preferences',
+            'Customize your KaziApp experience',
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey[600],
             ),
             textAlign: TextAlign.center,
           ),
-
           const SizedBox(height: 32),
 
           // Language Selection
-          const Row(
-            children: [
-              Icon(Icons.language, color: Color(0xFF2E7D32)),
-              SizedBox(width: 8),
-              Text(
-                'Preferred Language',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+          const Text(
+            'Preferred Language',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF2E7D32),
+            ),
           ),
-          const SizedBox(height: 12),
-
+          const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            initialValue: _selectedLanguage,
+            value: _selectedLanguage,
             decoration: InputDecoration(
               labelText: 'Language',
-              prefixIcon: const Icon(Icons.translate),
+              prefixIcon: const Icon(Icons.language),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -1348,301 +1190,104 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
                 borderSide: const BorderSide(color: Color(0xFF2E7D32)),
               ),
             ),
-            items: _languages.map((String language) {
-              return DropdownMenuItem<String>(
+            items: _languages.map((language) {
+              return DropdownMenuItem(
                 value: language,
                 child: Text(language),
               );
             }).toList(),
-            onChanged: (String? newValue) {
+            onChanged: (value) {
               setState(() {
-                _selectedLanguage = newValue ?? 'English';
+                _selectedLanguage = value ?? 'English';
               });
             },
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
 
-          // App Services Selection
-          const Row(
-            children: [
-              Icon(Icons.apps, color: Color(0xFF2E7D32)),
-              SizedBox(width: 8),
-              Text(
-                'App Services',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+          // Services Selection
+          const Text(
+            'Services You\'re Interested In',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF2E7D32),
+            ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Select services you want to use (you can change these later)',
+            'Select the services you\'d like to use (you can change these later)',
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey[600],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
-          ..._appServices.entries.map((service) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[300]!),
-                borderRadius: BorderRadius.circular(12),
-              ),
+          // Services List
+          ..._appServices.entries.map((entry) {
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
               child: CheckboxListTile(
                 title: Text(
-                  service.key,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  entry.key,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
                 subtitle: Text(
-                  service.value,
+                  entry.value,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     color: Colors.grey[600],
                   ),
                 ),
-                value: _selectedServices[service.key] ?? false,
-                onChanged: (bool? value) {
+                value: _selectedServices[entry.key] ?? false,
+                onChanged: (value) {
                   setState(() {
-                    _selectedServices[service.key] = value ?? false;
+                    _selectedServices[entry.key] = value ?? false;
                   });
                 },
                 activeColor: const Color(0xFF2E7D32),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
               ),
             );
-          }),
-
-          const SizedBox(height: 16),
-
-          // Quick Selection Buttons
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    setState(() {
-                      for (String service in _appServices.keys) {
-                        _selectedServices[service] = true;
-                      }
-                    });
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF2E7D32),
-                    side: const BorderSide(color: Color(0xFF2E7D32)),
-                  ),
-                  child: const Text('Select All'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    setState(() {
-                      for (String service in _appServices.keys) {
-                        _selectedServices[service] = false;
-                      }
-                    });
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: const BorderSide(color: Colors.red),
-                  ),
-                  child: const Text('Clear All'),
-                ),
-              ),
-            ],
-          ),
+          }).toList(),
 
           const SizedBox(height: 24),
 
-          // Registration Summary
+          // Welcome Message
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: const Color(0xFF2E7D32).withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(Icons.check_circle, color: Color(0xFF2E7D32)),
-                    SizedBox(width: 8),
-                    Text(
-                      'Registration Summary',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2E7D32),
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _buildSummaryRow('Name', _nameController.text),
-                _buildSummaryRow('Phone', '+254 ${_phoneController.text}'),
-                _buildSummaryRow('Farm', _farmNameController.text.isEmpty
-                    ? '${_nameController.text}\'s Farm'
-                    : _farmNameController.text),
-                _buildSummaryRow('Location', _selectedCounty),
-                _buildSummaryRow('Farming Type', _selectedFarmingType),
-                _buildSummaryRow('Experience', _selectedExperienceLevel),
-                _buildSummaryRow('Farm Size', '${_farmSizeController.text} acres'),
-                if (_selectedCrops.isNotEmpty)
-                  _buildSummaryRow('Crops', _selectedCrops.take(3).join(', ') +
-                      (_selectedCrops.length > 3 ? '...' : '')),
-                if (_selectedLivestock.isNotEmpty)
-                  _buildSummaryRow('Livestock', _selectedLivestock.take(3).join(', ') +
-                      (_selectedLivestock.length > 3 ? '...' : '')),
-                _buildSummaryRow('Language', _selectedLanguage),
-                _buildSummaryRow('Services', '${_selectedServices.values.where((v) => v).length} selected'),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Terms and Conditions
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF2E7D32).withOpacity(0.3)),
             ),
             child: Column(
               children: [
                 const Icon(
-                  Icons.info,
-                  color: Colors.blue,
+                  Icons.celebration,
+                  color: Color(0xFF2E7D32),
                   size: 32,
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'By completing registration, you agree to:',
+                  'Almost Done!',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Colors.blue,
+                    color: Color(0xFF2E7D32),
+                    fontSize: 16,
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  '• KaziApp Terms of Service\n'
-                  '• Privacy Policy\n'
-                  '• Data collection for service improvement\n'
-                  '• SMS notifications for important updates',
+                const SizedBox(height: 4),
+                Text(
+                  'Click "Complete Registration" to finish setting up your account.',
                   style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.blue,
+                    color: Colors.grey[700],
+                    fontSize: 14,
                   ),
-                ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () {
-                    _showTermsAndConditions();
-                  },
-                  child: const Text('Read Full Terms'),
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getFarmingTypeDescription(String type) {
-    switch (type) {
-      case 'Crop Farming':
-        return 'Growing crops like maize, beans, vegetables';
-      case 'Livestock Farming':
-        return 'Raising cattle, goats, sheep for meat/milk';
-      case 'Mixed Farming':
-        return 'Combination of crops and livestock';
-      case 'Poultry Farming':
-        return 'Raising chickens, ducks, turkeys for eggs/meat';
-      case 'Dairy Farming':
-        return 'Specialized milk production from cows/goats';
-      case 'Fish Farming':
-        return 'Aquaculture - raising fish in ponds/tanks';
-      case 'Horticulture':
-        return 'Growing fruits, flowers, ornamental plants';
-      case 'Agro-forestry':
-        return 'Combining trees with crops/livestock';
-      default:
-        return 'Select your primary farming activity';
-    }
-  }
-
-  Widget _buildSummaryRow(String label, String value) {
-    if (value.isEmpty) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              '$label:',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
-                fontSize: 13,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showTermsAndConditions() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Terms and Conditions'),
-        content: const SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'KaziApp Terms of Service',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 8),
-              Text(
-                '1. Service Usage: KaziApp provides agricultural services including AI diagnosis, weather updates, market prices, and veterinary connections.\n\n'
-                '2. Data Collection: We collect farm and personal information to provide personalized services.\n\n'
-                '3. Privacy: Your data is protected and used only for service improvement and delivery.\n\n'
-                '4. Communication: You may receive SMS notifications for important updates and alerts.\n\n'
-                '5. Service Availability: Services are provided as-is and availability may vary by location.\n\n'
-                '6. User Responsibility: Provide accurate information for best service delivery.',
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('I Understand'),
           ),
         ],
       ),

@@ -1,9 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'registration_steps/service_type_step.dart';
 import 'registration_steps/business_info_step.dart';
 import 'registration_steps/business_verification_step.dart';
 import 'registration_steps/account_setup_step.dart';
 import 'registration_steps/terms_completion_step.dart';
+import '../../models/user_profile.dart';
+import '../../services/user_profile_service.dart';
+import '../../services/registration_submission_service.dart';
 
 class RegistrationFlowScreen extends StatefulWidget {
   const RegistrationFlowScreen({super.key});
@@ -15,9 +19,12 @@ class RegistrationFlowScreen extends StatefulWidget {
 class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
   final PageController _pageController = PageController();
   int _currentStep = 0;
-  
+
   // Registration data
   final Map<String, dynamic> _registrationData = {};
+
+  // Services
+  final RegistrationSubmissionService _submissionService = RegistrationSubmissionService();
 
   final List<Map<String, dynamic>> _steps = [
     {
@@ -50,6 +57,7 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
   @override
   void dispose() {
     _pageController.dispose();
+    _submissionService.dispose();
     super.dispose();
   }
 
@@ -254,38 +262,140 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
       ),
     );
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      // Submit registration to admin system for real-time approval
+      final documents = <String, File>{};
 
-    if (mounted) {
-      Navigator.of(context).pop(); // Remove loading dialog
+      // Add document files if they exist
+      if (_registrationData['businessLicenseImage'] != null) {
+        final file = File(_registrationData['businessLicenseImage']);
+        if (await file.exists()) {
+          documents['businessLicenseImage'] = file;
+        }
+      }
 
-      // Check service type and redirect to appropriate portal
-      final serviceType = _registrationData['serviceType'];
-      if (serviceType == 'veterinarian') {
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          '/veterinary-dashboard',
-          (route) => false,
+      if (_registrationData['businessLogoImage'] != null) {
+        final file = File(_registrationData['businessLogoImage']);
+        if (await file.exists()) {
+          documents['businessLogoImage'] = file;
+        }
+      }
+
+      if (_registrationData['idCopyImage'] != null) {
+        final file = File(_registrationData['idCopyImage']);
+        if (await file.exists()) {
+          documents['idCopyImage'] = file;
+        }
+      }
+
+      // Submit to admin system for real-time approval
+      final submissionResult = await _submissionService.submitRegistration(
+        registrationData: _registrationData,
+        documents: documents.isNotEmpty ? documents : null,
+      );
+
+      if (!submissionResult['success']) {
+        throw Exception(submissionResult['error'] ?? 'Registration submission failed');
+      }
+
+      // Create user profile from registration data
+      final profileService = UserProfileService.instance;
+
+      // Create business information if available
+      BusinessInformation? businessInfo;
+      if (_registrationData['businessName'] != null) {
+        businessInfo = BusinessInformation(
+          businessName: _registrationData['businessName'],
+          businessRegistrationNumber: _registrationData['businessRegistrationNumber'],
+          businessType: _registrationData['businessType'],
+          businessAddress: _registrationData['address'],
+          businessPhone: _registrationData['phone'],
+          businessEmail: _registrationData['email'],
+          taxNumber: _registrationData['taxPin'],
+          description: _registrationData['description'],
+          businessLicense: _registrationData['businessLicense'],
+          taxPin: _registrationData['taxPin'],
+          yearsInBusiness: _registrationData['yearsInBusiness'],
+          hasBusinessLicense: _registrationData['hasBusinessLicense'] ?? false,
+          isRegisteredBusiness: _registrationData['isRegisteredBusiness'] ?? false,
+          businessLicenseImagePath: _registrationData['businessLicenseImage'],
+          businessLogoImagePath: _registrationData['businessLogoImage'],
+          idCopyImagePath: _registrationData['idCopyImage'],
         );
-      } else if (serviceType == 'machinery_provider') {
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          '/machinery-dashboard',
-          (route) => false,
+      }
+
+      // Create local user profile with registration tracking
+      await profileService.createProfile(
+        email: _registrationData['email'],
+        profileType: UserProfileType.businessRegistered,
+        firstName: _registrationData['firstName'],
+        lastName: _registrationData['lastName'],
+        phoneNumber: _registrationData['phone'],
+        location: _registrationData['address'],
+        county: _registrationData['county'],
+        subCounty: _registrationData['subCounty'],
+        serviceType: _registrationData['serviceType'],
+        serviceTypeName: _registrationData['serviceTypeName'],
+        businessInfo: businessInfo,
+        additionalData: {
+          ..._registrationData,
+          'registrationId': submissionResult['data']?['registrationId'],
+          'submissionStatus': 'submitted_for_approval',
+          'submittedAt': DateTime.now().toIso8601String(),
+        },
+      );
+
+      if (mounted) {
+        Navigator.of(context).pop(); // Remove loading dialog
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Registration submitted successfully! Your documents will be reviewed within 24-48 hours. You can start using the platform immediately.',
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 5),
+          ),
         );
-      } else if (_isMarketplaceServiceType(serviceType)) {
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          '/marketplace-dashboard',
-          (route) => false,
-        );
-      } else {
-        // Navigate to profile setup or dashboard for other service types
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          '/profile-setup',
-          (route) => false,
+
+        // Check service type and redirect to appropriate portal
+        final serviceType = _registrationData['serviceType'];
+        if (serviceType == 'veterinarian') {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/veterinary-dashboard',
+            (route) => false,
+          );
+        } else if (serviceType == 'machinery_provider') {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/machinery-dashboard',
+            (route) => false,
+          );
+        } else if (_isMarketplaceServiceType(serviceType)) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/marketplace-dashboard',
+            (route) => false,
+          );
+        } else {
+          // Navigate to profile management for other service types
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/profile-management',
+            (route) => false,
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Remove loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Registration failed: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }

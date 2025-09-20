@@ -151,7 +151,7 @@ class _ProfileIconWidgetState extends State<ProfileIconWidget> with TickerProvid
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 2),
                         ),
-                        child: Center(
+                        child: const Center(
                           child: Text(
                             '!',
                             style: TextStyle(
@@ -229,9 +229,9 @@ class _ProfileIconWidgetState extends State<ProfileIconWidget> with TickerProvid
     return Container(
       width: widget.size,
       height: widget.size,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         shape: BoxShape.circle,
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [Color(0xFF2E7D32), Color(0xFF4CAF50)],

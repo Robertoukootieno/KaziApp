@@ -1,0 +1,40 @@
+{
+  "name": "kaziapp-marketplace-service",
+  "version": "1.0.0",
+  "description": "KaziApp Marketplace Service - Product listings, orders, inventory management",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest",
+    "lint": "eslint src/"
+  },
+  "keywords": [
+    "marketplace",
+    "e-commerce",
+    "products",
+    "orders",
+    "inventory",
+    "agriculture",
+    "kaziapp"
+  ],
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0",
+    "dotenv": "^16.3.1",
+    "winston": "^3.10.0",
+    "mongoose": "^7.4.0",
+    "multer": "^1.4.5-lts.1",
+    "sharp": "^0.32.4",
+    "stripe": "^13.5.0",
+    "redis": "^4.6.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "jest": "^29.6.1",
+    "eslint": "^8.45.0"
+  },
+  "author": "KaziApp Team",
+  "license": "MIT"
+}

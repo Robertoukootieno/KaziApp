@@ -5,6 +5,8 @@ import 'email_verification_screen.dart';
 import 'forgot_password_screen.dart';
 import '../../navigation/main_navigation.dart';
 import '../../services/keycloak_auth_service.dart';
+import '../../services/zero_trust_auth_service.dart';
+import '../../services/behavioral_biometrics_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -211,7 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Sign in to continue to KaziApp Mkulima',
+                        'Sign in to continue to Mkulima Connect',
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.grey[600],

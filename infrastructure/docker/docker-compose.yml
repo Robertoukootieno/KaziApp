@@ -1,0 +1,276 @@
+version: '3.8'
+
+# KaziApp Main Docker Compose Configuration
+# This file orchestrates the entire KaziApp microservices architecture
+
+networks:
+  kaziapp-network:
+    driver: bridge
+    name: kaziapp-network
+
+volumes:
+  postgres_data:
+    name: kaziapp_postgres_data
+  mongodb_data:
+    name: kaziapp_mongodb_data
+  redis_data:
+    name: kaziapp_redis_data
+  uploads_data:
+    name: kaziapp_uploads_data
+
+services:
+  # =============================================================================
+  # DATABASES
+  # =============================================================================
+  
+  postgres:
+    build:
+      context: ./databases/postgres
+      dockerfile: Dockerfile
+    container_name: kaziapp_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-kaziapp}
+      POSTGRES_USER: ${POSTGRES_USER:-kaziapp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kaziapp_password}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./databases/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./databases/postgres/migrations:/docker-entrypoint-initdb.d/migrations
+    networks:
+      - kaziapp-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kaziapp}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  mongodb:
+    build:
+      context: ./databases/mongodb
+      dockerfile: Dockerfile
+    container_name: kaziapp_mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME:-kaziapp}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD:-kaziapp_password}
+      MONGO_INITDB_DATABASE: ${MONGODB_DATABASE:-kaziapp}
+    ports:
+      - "${MONGODB_PORT:-27017}:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./databases/mongodb/init.js:/docker-entrypoint-initdb.d/init.js
+    networks:
+      - kaziapp-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  redis:
+    build:
+      context: ./databases/redis
+      dockerfile: Dockerfile
+    container_name: kaziapp_redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+      - ./databases/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - kaziapp-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # =============================================================================
+  # REVERSE PROXY
+  # =============================================================================
+  
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: kaziapp_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - api-gateway
+      - web-client
+      - admin-client
+    networks:
+      - kaziapp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # =============================================================================
+  # CORE SERVICES
+  # =============================================================================
+  
+  api-gateway:
+    build:
+      context: ../../services/api-gateway
+      dockerfile: ../../infrastructure/docker/services/api-gateway/Dockerfile
+    container_name: kaziapp_api_gateway
+    ports:
+      - "${API_GATEWAY_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - POSTGRES_URL=${POSTGRES_URL}
+      - MONGODB_URL=${MONGODB_URL}
+      - REDIS_URL=${REDIS_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - kaziapp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: ../../services/user-service
+      dockerfile: ../../infrastructure/docker/services/user-service/Dockerfile
+    container_name: kaziapp_user_service
+    ports:
+      - "${USER_SERVICE_PORT:-3001}:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - POSTGRES_URL=${POSTGRES_URL}
+      - REDIS_URL=${REDIS_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - KENYA_VET_BOARD_API_URL=${KENYA_VET_BOARD_API_URL}
+      - KENYA_VET_BOARD_API_KEY=${KENYA_VET_BOARD_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - kaziapp-network
+    healthcheck:
+      test: ["CMD", "node", "src/utils/healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  auth-service:
+    build:
+      context: ../../services/auth-service
+      dockerfile: ../../infrastructure/docker/services/auth-service/Dockerfile
+    container_name: kaziapp_auth_service
+    ports:
+      - "${AUTH_SERVICE_PORT:-3002}:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - POSTGRES_URL=${POSTGRES_URL}
+      - REDIS_URL=${REDIS_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - KEYCLOAK_URL=${KEYCLOAK_URL}
+      - KEYCLOAK_REALM=${KEYCLOAK_REALM}
+      - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID}
+      - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - kaziapp-network
+    healthcheck:
+      test: ["CMD", "node", "src/utils/healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  communication:
+    build:
+      context: ../../services/communication
+      dockerfile: ../../infrastructure/docker/services/communication/Dockerfile
+    container_name: kaziapp_communication
+    ports:
+      - "${COMMUNICATION_PORT:-3003}:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - MONGODB_URL=${MONGODB_URL}
+      - REDIS_URL=${REDIS_URL}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - WHATSAPP_API_TOKEN=${WHATSAPP_API_TOKEN}
+      - SMS_API_KEY=${SMS_API_KEY}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - kaziapp-network
+    healthcheck:
+      test: ["CMD", "node", "src/utils/healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  ai-diagnostics:
+    build:
+      context: ../../services/ai-diagnostics
+      dockerfile: ../../infrastructure/docker/services/ai-diagnostics/Dockerfile
+    container_name: kaziapp_ai_diagnostics
+    ports:
+      - "${AI_DIAGNOSTICS_PORT:-3004}:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - MONGODB_URL=${MONGODB_URL}
+      - REDIS_URL=${REDIS_URL}
+      - MODEL_PATH=/app/models
+    volumes:
+      - ../../ai-models:/app/models
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - kaziapp-network
+    healthcheck:
+      test: ["CMD", "node", "src/utils/healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped

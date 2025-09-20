@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 import 'livestock_diagnosis_screen.dart';
 import 'crop_diagnosis_screen.dart';
 import 'vet_search_screen.dart';

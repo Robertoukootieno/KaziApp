@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../widgets/advanced_registration_widget.dart';
-import '../farm_health/farm_dashboard_screen.dart';
+import '../../widgets/farmer_graphics.dart';
+import '../../widgets/mkulima_connect_logo.dart';
+
 import '../home_screen.dart';
 import '../../services/user_profile_service.dart';
-import '../security/security_dashboard_screen.dart';
 
-/// Enhanced Registration Screen with Advanced Security Features
+/// Enhanced Registration Screen with Advanced Security Features (Hidden UI)
+/// All security features run in background while providing engaging farmer-focused UI
 class EnhancedRegistrationScreen extends StatefulWidget {
   final String registrationStep;
   final Map<String, dynamic>? initialData;
@@ -22,49 +24,122 @@ class EnhancedRegistrationScreen extends StatefulWidget {
 
 class _EnhancedRegistrationScreenState extends State<EnhancedRegistrationScreen>
     with TickerProviderStateMixin {
-  
-  late AnimationController _backgroundAnimation;
-  late AnimationController _securityBadgeAnimation;
-  
-  bool _showSecurityDetails = false;
-  String? _sessionToken;
-  int _securityLevel = 0;
+  // Professional animation controllers for enhanced UI
+  late AnimationController _fadeController;
+  late AnimationController _slideController;
+  late AnimationController _logoController;
+  late AnimationController _backgroundController;
+
+  // Animations
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _logoScaleAnimation;
+  late Animation<double> _backgroundAnimation;
+
   Map<String, dynamic> _registrationData = {};
+  bool _isScreenReady = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeAnimations();
     _registrationData = widget.initialData ?? {};
+    _initializeAnimations();
+    _startAnimationSequence();
+  }
+
+  void _initializeAnimations() {
+    // Fade animation for overall screen
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
+    ));
+
+    // Slide animation for content
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    // Logo animations
+    _logoController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    _logoScaleAnimation = Tween<double>(
+      begin: 0.5,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _logoController,
+      curve: Curves.elasticOut,
+    ));
+
+    // Background gradient animation
+    _backgroundController = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    );
+    _backgroundAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _backgroundController,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  void _startAnimationSequence() {
+    // Start background animation once (no repeat to prevent flickering)
+    _backgroundController.forward();
+
+    // Delay before showing content
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        setState(() {
+          _isScreenReady = true;
+        });
+
+        // Start logo animation
+        _logoController.forward();
+
+        // Start fade animation
+        _fadeController.forward();
+
+        // Start slide animation with delay
+        Future.delayed(const Duration(milliseconds: 400), () {
+          if (mounted) {
+            _slideController.forward();
+          }
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
-    _backgroundAnimation.dispose();
-    _securityBadgeAnimation.dispose();
+    _fadeController.dispose();
+    _slideController.dispose();
+    _logoController.dispose();
+    _backgroundController.dispose();
     super.dispose();
-  }
-
-  void _initializeAnimations() {
-    _backgroundAnimation = AnimationController(
-      duration: const Duration(seconds: 10),
-      vsync: this,
-    );
-    
-    _securityBadgeAnimation = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    );
-    
-    _backgroundAnimation.repeat();
-    _securityBadgeAnimation.forward();
   }
 
   void _onRegistrationSuccess(Map<String, dynamic> data, String sessionToken, int securityLevel) async {
     setState(() {
       _registrationData = data;
-      _sessionToken = sessionToken;
-      _securityLevel = securityLevel;
     });
 
     // Save user profile data
@@ -263,183 +338,208 @@ class _EnhancedRegistrationScreenState extends State<EnhancedRegistrationScreen>
     }
   }
 
-  void _toggleSecurityDetails() {
-    setState(() {
-      _showSecurityDetails = !_showSecurityDetails;
-    });
-  }
+
 
   @override
   Widget build(BuildContext context) {
+    if (!_isScreenReady) {
+      return _buildLoadingScreen();
+    }
+
     return Scaffold(
-      body: AnimatedBuilder(
-        animation: _backgroundAnimation,
-        builder: (context, child) {
-          return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color.lerp(
-                    Colors.indigo[900],
-                    Colors.purple[900],
-                    _backgroundAnimation.value,
-                  )!,
-                  Color.lerp(
-                    Colors.blue[800],
-                    Colors.indigo[800],
-                    _backgroundAnimation.value,
-                  )!,
-                ],
-              ),
-            ),
-            child: SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    
-                    // App Logo and Title
-                    _buildHeader(),
-                    
-                    const SizedBox(height: 32),
-                    
-                    // Security Badge
-                    _buildSecurityBadge(),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Advanced Registration Widget
-                    AdvancedRegistrationWidget(
-                      registrationStep: widget.registrationStep,
-                      initialData: widget.initialData,
-                      onRegistrationSuccess: _onRegistrationSuccess,
-                      onRegistrationFailure: _onRegistrationFailure,
-                      enableBiometrics: true,
-                      enableBehavioralBiometrics: true,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color.lerp(
+                const Color(0xFF1B5E20),
+                const Color(0xFF2E7D32),
+                _backgroundAnimation.value,
+              )!,
+              Color.lerp(
+                const Color(0xFF2E7D32),
+                const Color(0xFF4CAF50),
+                _backgroundAnimation.value,
+              )!,
+              Color.lerp(
+                const Color(0xFF4CAF50),
+                const Color(0xFF66BB6A),
+                _backgroundAnimation.value,
+              )!,
+            ],
+          ),
+        ),
+        child: Stack(
+          children: [
+            // Static background particles (no animation to prevent flickering)
+            _buildStaticParticles(),
+
+            // Main content
+            FadeTransition(
+              opacity: _fadeAnimation,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: SafeArea(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+
+                        // Animated Engaging Header
+                        _buildAnimatedHeader(),
+
+                        const SizedBox(height: 32),
+
+                        // Advanced Registration Widget (Security features hidden)
+                        AdvancedRegistrationWidget(
+                          registrationStep: widget.registrationStep,
+                          initialData: widget.initialData,
+                          onRegistrationSuccess: _onRegistrationSuccess,
+                          onRegistrationFailure: _onRegistrationFailure,
+                          enableBiometrics: true,
+                          enableBehavioralBiometrics: true,
+                          hideSecurityWidgets: true, // Hide all security UI elements
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        // Engaging Footer with Farmer Graphics
+                        _buildEngagingFooter(),
+                      ],
                     ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Security Information
-                    _buildSecurityInfo(),
-                    
-                    const SizedBox(height: 32),
-                    
-                    // Footer
-                    _buildFooter(),
-                  ],
+                  ),
                 ),
               ),
             ),
-          );
-        },
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return Column(
-      children: [
-        Container(
-          width: 120,
-          height: 120,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.green[400]!, Colors.green[600]!],
+  Widget _buildLoadingScreen() {
+    return Scaffold(
+      backgroundColor: const Color(0xFF2E7D32),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Static logo (no animation during loading to prevent flickering)
+            const MkulimaConnectLogo(
+              width: 80,
+              height: 80,
+              showText: true,
+              textColor: Colors.white,
+              fontSize: 24,
+              isHorizontal: false,
             ),
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.green[400]!.withValues(alpha: 0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
+
+            const SizedBox(height: 32),
+
+            // Loading indicator
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              strokeWidth: 3,
+            ),
+
+            const SizedBox(height: 24),
+
+            // Loading text
+            Text(
+              'Preparing your registration...',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.white.withValues(alpha: 0.9),
+                fontWeight: FontWeight.w500,
               ),
-            ],
-          ),
-          child: const Icon(
-            Icons.agriculture,
-            size: 60,
-            color: Colors.white,
-          ),
+            ),
+          ],
         ),
-        
-        const SizedBox(height: 24),
-        
-        Text(
-          _getStepTitle(),
-          style: const TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            letterSpacing: -0.5,
-          ),
-        ),
-        
-        const SizedBox(height: 8),
-        
-        Text(
-          _getStepDescription(),
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.white.withValues(alpha: 0.8),
-            height: 1.4,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildSecurityBadge() {
-    return AnimatedBuilder(
-      animation: _securityBadgeAnimation,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _securityBadgeAnimation.value,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.amber[400]!, Colors.orange[500]!],
-              ),
-              borderRadius: BorderRadius.circular(25),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.amber[400]!.withValues(alpha: 0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
+  Widget _buildStaticParticles() {
+    return CustomPaint(
+      painter: StaticParticlesPainter(),
+      size: Size.infinite,
+    );
+  }
+
+  Widget _buildAnimatedHeader() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          // Animated logo with controlled animation
+          AnimatedBuilder(
+            animation: _logoController,
+            builder: (context, child) {
+              return Transform.scale(
+                scale: _logoScaleAnimation.value,
+                child: const MkulimaConnectLogo(
+                  width: 100,
+                  height: 100,
+                  showText: false,
                 ),
-              ],
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.security,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                SizedBox(width: 8),
-                Text(
-                  'Enterprise Security',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+              );
+            },
+          ),
+
+          const SizedBox(height: 24),
+
+          // Animated title
+          FadeTransition(
+            opacity: _fadeAnimation,
+            child: const Text(
+              'Join Mkulima Connect',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                letterSpacing: -0.5,
+                shadows: [
+                  Shadow(
+                    offset: Offset(0, 2),
+                    blurRadius: 4,
+                    color: Colors.black26,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        );
-      },
+
+          const SizedBox(height: 12),
+
+          // Animated subtitle
+          SlideTransition(
+            position: _slideAnimation,
+            child: Text(
+              'Connect with agricultural experts and grow your farming business',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.white.withValues(alpha: 0.9),
+                fontWeight: FontWeight.w500,
+                height: 1.4,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildSecurityInfo() {
+
+
+
+
+
+
+  Widget _buildEngagingFooter() {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -447,149 +547,63 @@ class _EnhancedRegistrationScreenState extends State<EnhancedRegistrationScreen>
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.2),
+          width: 1,
         ),
       ),
       child: Column(
         children: [
-          Row(
-            children: [
-              Icon(
-                Icons.info_outline,
-                color: Colors.white.withValues(alpha: 0.8),
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Advanced Security Features',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ),
-              ),
-              const Spacer(),
-              GestureDetector(
-                onTap: _toggleSecurityDetails,
-                child: Icon(
-                  _showSecurityDetails ? Icons.expand_less : Icons.expand_more,
-                  color: Colors.white.withValues(alpha: 0.8),
-                ),
-              ),
-            ],
+          // Farm scene illustration
+          SizedBox(
+            height: 80,
+            width: double.infinity,
+            child: FarmerGraphics.farmScene(
+              width: double.infinity,
+              height: 80,
+            ),
           ),
-
-          if (_showSecurityDetails) ...[
-            const SizedBox(height: 16),
-            _buildSecurityFeaturesList(),
-          ],
+          const SizedBox(height: 16),
+          Text(
+            'Empowering Kenyan Farmers',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.9),
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Join thousands of farmers already using KaziApp to improve their farming practices and connect with agricultural experts.',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 14,
+              fontWeight: FontWeight.w300,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildSecurityFeaturesList() {
-    final features = [
-      '🔐 AES-256-GCM Encryption',
-      '🛡️ Zero-Trust Architecture',
-      '🧠 Behavioral Biometrics',
-      '📱 Device Fingerprinting',
-      '⚠️ Real-time Threat Detection',
-      '🔑 Multi-Factor Authentication',
-    ];
+// Custom painter for static background particles (no animation to prevent flickering)
+class StaticParticlesPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.1)
+      ..style = PaintingStyle.fill;
 
-    return Column(
-      children: features.map((feature) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            children: [
-              Text(
-                feature,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-  }
+    // Draw static floating particles
+    for (int i = 0; i < 15; i++) {
+      final x = size.width * (i * 0.1 + 0.15);
+      final y = size.height * (i * 0.08 + 0.2);
+      final radius = 2.0 + (i % 3);
 
-  Widget _buildFooter() {
-    return Column(
-      children: [
-        Text(
-          'Secured by KaziApp Enterprise Security',
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.6),
-            fontSize: 12,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SecurityDashboardScreen(),
-                  ),
-                );
-              },
-              child: Text(
-                'Security Dashboard',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontSize: 12,
-                  decoration: TextDecoration.underline,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  String _getStepTitle() {
-    switch (widget.registrationStep) {
-      case 'basic_info':
-        return 'Join KaziApp Mkulima';
-      case 'identity_verification':
-        return 'Verify Your Identity';
-      case 'password_setup':
-        return 'Secure Your Account';
-      case 'farm_info':
-        return 'Farm Information';
-      case 'farming_details':
-        return 'Farming Details';
-      case 'preferences':
-        return 'Preferences & Services';
-      default:
-        return 'Registration';
+      canvas.drawCircle(Offset(x, y), radius, paint);
     }
   }
 
-  String _getStepDescription() {
-    switch (widget.registrationStep) {
-      case 'basic_info':
-        return 'Enter your basic information to get started with enterprise-grade security';
-      case 'identity_verification':
-        return 'Verify your phone number with our secure verification system';
-      case 'password_setup':
-        return 'Create a strong password to complete your secure registration';
-      case 'farm_info':
-        return 'Tell us about your farm location and basic information';
-      case 'farming_details':
-        return 'Select your crops and livestock for personalized services';
-      case 'preferences':
-        return 'Choose your preferred services and complete your registration';
-      default:
-        return 'Complete your registration with advanced security';
-    }
-  }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
