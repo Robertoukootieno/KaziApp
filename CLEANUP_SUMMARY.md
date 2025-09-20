@@ -14,9 +14,11 @@ This document summarizes the comprehensive cleanup performed on the KaziApp proj
 
 **Kept:**
 - `backend/` - Full-featured backend with PostgreSQL, JWT auth, WebSocket
-- `mock-backend/` - Useful for testing and development
 
-**Rationale:** The main `backend/` directory contains the comprehensive, production-ready implementation with all necessary features. The `mock-backend/` is preserved for testing purposes.
+**Additional Cleanup (Post-Push):**
+- `mock-backend/` - Removed as duplicate (simple Express server with in-memory storage)
+
+**Rationale:** The main `backend/` directory contains the comprehensive, production-ready implementation with all necessary features. The `mock-backend/` was redundant as it provided similar functionality but with in-memory storage instead of proper database integration.
 
 ### 💰 Payment Services
 **Removed:**
@@ -57,8 +59,7 @@ Added `package.json` files to previously empty service directories to indicate p
 ### 📁 Final Clean Project Structure
 ```
 KaziApp/
-├── backend/                 # Main backend implementation
-├── mock-backend/           # Testing backend
+├── backend/                 # Main backend implementation (consolidated)
 ├── clients/                # Client applications
 │   ├── mobile/            # Flutter mobile app
 │   ├── web/               # React.js web app
